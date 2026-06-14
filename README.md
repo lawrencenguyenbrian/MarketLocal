@@ -1,1 +1,1 @@
-Local Market app
+Local Second-Hand Market app
