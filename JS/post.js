@@ -1,8 +1,35 @@
 // ════════════════════════════════════════
 // CONFIG — thay bằng thông tin thật của bạn
 // ════════════════════════════════════════
-const CLOUDINARY_CLOUD_NAME = 'your_cloud_name';   // TODO: thay
-const CLOUDINARY_UPLOAD_PRESET = 'your_preset';    // TODO: tạo Unsigned preset trên Cloudinary
+const CLOUDINARY_CLOUD_NAME = 'dfdom0zpb';   // TODO: thay
+const CLOUDINARY_UPLOAD_PRESET = 'market_local';    // TODO: tạo Unsigned preset trên Cloudinary
+
+if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
+  console.warn('Cloudinary config not set — update CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET in JS/post.js');
+}
+
+// Firebase (keep your existing firebaseConfig)
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
+import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDsNtYcowBKtJw_doiE_JpV_d0KZaLMqA0",
+  authDomain: "marketlocal-e4ab7.firebaseapp.com",
+  projectId: "marketlocal-e4ab7",
+  storageBucket: "marketlocal-e4ab7.firebasestorage.app",
+  messagingSenderId: "257007076578",
+  appId: "1:257007076578:web:5e8897d117868494cf8abb"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUser = null;
+onAuthStateChanged(auth, (user) => {
+  currentUser = user;
+});
 
 // ════════════════════════════════════════
 // STATE
@@ -27,6 +54,14 @@ document.querySelectorAll('.condition-btn').forEach(btn => {
 const uploadZone   = document.getElementById('uploadZone');
 const fileInput    = document.getElementById('fileInput');
 const previewGrid  = document.getElementById('previewGrid');
+
+// Visible warning in UI when Cloudinary config is missing
+if ((!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) && uploadZone) {
+  const warn = document.createElement('div');
+  warn.style.cssText = 'padding:8px 10px;background:#fff3cd;border:1px solid #ffeeba;color:#664d03;border-radius:6px;margin-top:8px;font-size:13px';
+  warn.textContent = 'Cloudinary chưa cấu hình — ảnh sẽ không upload. Cập nhật `CLOUDINARY_CLOUD_NAME` và `CLOUDINARY_UPLOAD_PRESET` trong JS/post.js';
+  uploadZone.appendChild(warn);
+}
 
 // Drag & drop visual
 uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
@@ -64,7 +99,10 @@ function renderPreviewItem(index, localUrl) {
     <img src="${localUrl}" alt="ảnh ${index + 1}" />
     <div class="preview-uploading" id="uploading-${index}">
       <div class="uploading-spinner"></div>
-      Đang tải...
+      <div class="uploading-text">Đang tải...</div>
+      <div class="upload-progress" id="progress-${index}" style="width:80%;height:6px;background:rgba(0,0,0,0.06);border-radius:4px;margin-top:6px;overflow:hidden;">
+        <div class="upload-progress-bar" id="progress-bar-${index}" style="width:0%;height:100%;background:var(--primary);transition:width .2s"></div>
+      </div>
     </div>
     ${index === 0 ? '<span class="preview-main-badge">Ảnh bìa</span>' : ''}
     <button class="preview-remove" onclick="removeImage(${index})" title="Xoá ảnh">✕</button>
@@ -72,30 +110,57 @@ function renderPreviewItem(index, localUrl) {
   previewGrid.appendChild(item);
 }
 
-async function uploadToCloudinary(file, index) {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+function uploadToCloudinary(file, index) {
+  // Use XMLHttpRequest to track upload progress
+  const url = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`;
+  const xhr = new XMLHttpRequest();
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
 
-  try {
-    const res = await fetch(
-      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-      { method: 'POST', body: formData }
-    );
-    const data = await res.json();
-    if (data.secure_url) {
-      uploadedImages[index].cloudUrl  = data.secure_url;
-      uploadedImages[index].publicId  = data.public_id;
-      // Ẩn spinner
-      const spinner = document.getElementById(`uploading-${index}`);
-      if (spinner) spinner.style.display = 'none';
-    } else {
-      showToast('Lỗi upload ảnh. Kiểm tra Cloudinary config.', 'error');
+  const progressBar = document.getElementById(`progress-bar-${index}`);
+  const uploadingEl = document.getElementById(`uploading-${index}`);
+
+  xhr.open('POST', url, true);
+  xhr.upload.addEventListener('progress', (e) => {
+    if (!e.lengthComputable) return;
+    const percent = Math.round((e.loaded / e.total) * 100);
+    if (progressBar) progressBar.style.width = percent + '%';
+    if (uploadingEl) uploadingEl.querySelector('.uploading-text').textContent = `Đang tải... ${percent}%`;
+  });
+
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState === 4) {
+      if (xhr.status === 200) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          if (data.secure_url) {
+            uploadedImages[index].cloudUrl  = data.secure_url;
+            uploadedImages[index].publicId  = data.public_id;
+            uploadedImages[index].width     = data.width || null;
+            uploadedImages[index].height    = data.height || null;
+            if (progressBar) progressBar.style.width = '100%';
+            const spinner = document.getElementById(`uploading-${index}`);
+            if (spinner) spinner.style.display = 'none';
+          } else {
+            showToast('Lỗi upload ảnh. Kiểm tra Cloudinary config.', 'error');
+          }
+        } catch (err) {
+          console.error('Cloudinary parse error:', err, xhr.responseText);
+          showToast('Lỗi upload ảnh.', 'error');
+        }
+      } else {
+        console.error('Cloudinary upload failed', xhr.status, xhr.responseText);
+        showToast('Upload ảnh thất bại.', 'error');
+      }
     }
-  } catch (err) {
-    console.error('Cloudinary error:', err);
+  };
+
+  xhr.onerror = function () {
     showToast('Không thể kết nối Cloudinary.', 'error');
-  }
+  };
+
+  xhr.send(fd);
 }
 
 function removeImage(index) {
@@ -188,22 +253,28 @@ document.getElementById('postForm').addEventListener('submit', async (e) => {
     description,
     phone,
     condition: selectedCondition,
-    images: uploadedImages.map(img => img.cloudUrl),
-    createdAt: new Date().toISOString(),
-    // TODO: thêm sellerId từ Firebase Auth: firebase.auth().currentUser.uid
+    images: uploadedImages.map(img => ({ url: img.cloudUrl, publicId: img.publicId, width: img.width || null, height: img.height || null })),
+    // Firestore timestamps
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    // TODO: thêm sellerId từ Firebase Auth
   };
 
   try {
-    // TODO: lưu vào Firestore
-    // const db = getFirestore(app);
-    // await addDoc(collection(db, 'listings'), listing);
+    if (!currentUser) {
+      showToast('Bạn cần đăng nhập để đăng tin.', 'error');
+      setTimeout(() => window.location.href = 'auth.html', 1000);
+      return;
+    }
 
-    // Demo — giả lập delay
-    await new Promise(r => setTimeout(r, 1000));
-    console.log('Listing data:', listing);
-
+    const docRef = await addDoc(collection(db, 'listings'), {
+      ...listing,
+      ownerId: currentUser.uid,
+      status: 'active'
+    });
+    console.log('Created listing:', docRef.id);
     showToast('Đăng tin thành công!', 'success');
-    setTimeout(() => window.location.href = 'index.html', 1500);
+    setTimeout(() => window.location.href = 'index.html', 1200);
   } catch (err) {
     console.error(err);
     showToast('Có lỗi xảy ra, thử lại sau.', 'error');

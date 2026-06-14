@@ -1,3 +1,34 @@
+// Firebase modular SDK (CDN) imports — keep your original firebaseConfig
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup
+} from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
+import {
+  getFirestore,
+  doc,
+  setDoc,
+  serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+
+// Your web app's Firebase configuration (unchanged)
+const firebaseConfig = {
+  apiKey: "AIzaSyDsNtYcowBKtJw_doiE_JpV_d0KZaLMqA0",
+  authDomain: "marketlocal-e4ab7.firebaseapp.com",
+  projectId: "marketlocal-e4ab7",
+  storageBucket: "marketlocal-e4ab7.firebasestorage.app",
+  messagingSenderId: "257007076578",
+  appId: "1:257007076578:web:5e8897d117868494cf8abb"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
 // ── Tab switching ──
 const tabs = document.querySelectorAll('.auth-tab');
 const sections = document.querySelectorAll('.form-section');
@@ -39,9 +70,16 @@ document.getElementById('loginForm').addEventListener('submit', (e) => {
     showAlert('loginAlert', 'Vui lòng điền đầy đủ thông tin.', 'danger');
     return;
   }
-
-  // TODO: Firebase Auth — signInWithEmailAndPassword(auth, email, password)
   showAlert('loginAlert', 'Đang đăng nhập...', 'info');
+  signInWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      showAlert('loginAlert', 'Đăng nhập thành công. Chuyển hướng...', 'success');
+      // redirect after short delay
+      setTimeout(() => { window.location.href = 'home.html'; }, 800);
+    })
+    .catch((err) => {
+      showAlert('loginAlert', err.message || 'Đăng nhập thất bại.', 'danger');
+    });
 });
 
 // ── Register form submit ──
@@ -68,16 +106,52 @@ document.getElementById('registerForm').addEventListener('submit', (e) => {
     return;
   }
 
-  // TODO: Firebase Auth — createUserWithEmailAndPassword(auth, email, password)
-  //       then save user profile to Firestore: { name, email, province }
-  showAlert('registerAlert', 'Đăng ký thành công! Đang chuyển hướng...', 'success');
+  showAlert('registerAlert', 'Đang tạo tài khoản...', 'info');
+  createUserWithEmailAndPassword(auth, email, password)
+    .then(async (userCredential) => {
+      const user = userCredential.user;
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          name,
+          email,
+          province,
+          createdAt: serverTimestamp()
+        });
+      } catch (e) {
+        console.warn('Failed to write user profile:', e);
+      }
+      showAlert('registerAlert', 'Đăng ký thành công! Chuyển hướng...', 'success');
+      setTimeout(() => { window.location.href = 'home.html'; }, 800);
+    })
+    .catch((err) => {
+      showAlert('registerAlert', err.message || 'Đăng ký thất bại.', 'danger');
+    });
 });
 
 // ── Google Sign-In ──
 document.querySelectorAll('.btn-google').forEach(btn => {
   btn.addEventListener('click', () => {
-    // TODO: Firebase Auth — signInWithPopup(auth, new GoogleAuthProvider())
-    alert('Google Sign-In — kết nối Firebase để kích hoạt.');
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider)
+      .then(async (result) => {
+        const user = result.user;
+        try {
+          await setDoc(doc(db, 'users', user.uid), {
+            name: user.displayName || '',
+            email: user.email || '',
+            province: '',
+            provider: 'google',
+            lastLogin: serverTimestamp()
+          }, { merge: true });
+        } catch (e) {
+          console.warn('Failed to write Google user:', e);
+        }
+        showAlert('loginAlert', 'Đăng nhập Google thành công. Chuyển hướng...', 'success');
+        setTimeout(() => { window.location.href = 'home.html'; }, 800);
+      })
+      .catch((err) => {
+        showAlert('loginAlert', err.message || 'Google Sign-In thất bại.', 'danger');
+      });
   });
 });
 
