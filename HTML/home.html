@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarketLocal — Mua bán đồ cũ gần bạn</title>
+
+  <!-- Bootstrap 5 -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <!-- Tabler Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/CSS/home.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════
+     NAVBAR
+════════════════════════════════════════ -->
+<nav class="navbar navbar-expand-md py-2">
+  <div class="container">
+
+    <a href="index.html" class="navbar-brand">
+      <i class="ti ti-shopping-bag" aria-hidden="true"></i>
+      MarketLocal
+    </a>
+
+    <!-- Search bar (desktop) -->
+    <div class="nav-search d-none d-md-block">
+      <div class="search-wrap">
+        <i class="ti ti-search" aria-hidden="true"></i>
+        <input type="text" id="globalSearch" placeholder="Tìm kiếm sản phẩm..." />
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="nav-actions ms-auto">
+      <button class="nav-icon-btn d-none d-md-flex" title="Yêu thích">
+        <i class="ti ti-heart" aria-hidden="true"></i>
+      </button>
+
+      <button class="nav-icon-btn d-none d-md-flex" title="Thông báo">
+        <i class="ti ti-bell" aria-hidden="true"></i>
+        <span class="badge-dot"></span>
+      </button>
+
+      <a href="auth.html" class="btn-nav d-none d-md-flex">
+        <i class="ti ti-user" aria-hidden="true"></i>
+        Đăng nhập
+      </a>
+
+      <a href="post.html" class="btn-nav btn-nav-primary">
+        <i class="ti ti-plus" aria-hidden="true"></i>
+        Đăng tin
+      </a>
+
+      <!-- Mobile menu toggle -->
+      <button class="nav-icon-btn d-md-none" id="mobileMenuBtn">
+        <i class="ti ti-menu-2" aria-hidden="true"></i>
+      </button>
+    </div>
+
+  </div>
+</nav>
+
+<!-- Mobile search -->
+<div class="d-md-none px-3 py-2" style="background:white; border-bottom:1px solid var(--border);">
+  <div class="search-wrap">
+    <i class="ti ti-search" aria-hidden="true"></i>
+    <input type="text" placeholder="Tìm kiếm sản phẩm..." />
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     LOCATION BAR
+════════════════════════════════════════ -->
+<div class="location-bar">
+  <div class="container">
+    <div class="location-inner">
+      <i class="ti ti-map-pin" aria-hidden="true"></i>
+      Đang hiển thị sản phẩm tại:
+      <strong id="currentLocation">TP. Hồ Chí Minh</strong>
+      <button class="location-change" id="btnChangeLocation">Đổi khu vực</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     FILTER CHIPS / CATEGORIES BAR
+════════════════════════════════════════ -->
+<div class="filter-bar">
+  <div class="filter-scroll">
+    <button class="filter-chip active" data-cat="all">
+      <i class="ti ti-layout-grid" aria-hidden="true"></i> Tất cả
+    </button>
+    <div class="filter-divider"></div>
+    <button class="filter-chip" data-cat="electronics">
+      <i class="ti ti-device-laptop" aria-hidden="true"></i> Điện tử
+    </button>
+    <button class="filter-chip" data-cat="fashion">
+      <i class="ti ti-shirt" aria-hidden="true"></i> Thời trang
+    </button>
+    <button class="filter-chip" data-cat="furniture">
+      <i class="ti ti-armchair" aria-hidden="true"></i> Nội thất
+    </button>
+    <button class="filter-chip" data-cat="vehicle">
+      <i class="ti ti-bike" aria-hidden="true"></i> Xe cộ
+    </button>
+    <button class="filter-chip" data-cat="books">
+      <i class="ti ti-book" aria-hidden="true"></i> Sách
+    </button>
+    <button class="filter-chip" data-cat="sports">
+      <i class="ti ti-ball-basketball" aria-hidden="true"></i> Thể thao
+    </button>
+    <button class="filter-chip" data-cat="kids">
+      <i class="ti ti-baby-carriage" aria-hidden="true"></i> Mẹ &amp; Bé
+    </button>
+    <button class="filter-chip" data-cat="other">
+      <i class="ti ti-dots" aria-hidden="true"></i> Khác
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     HERO BANNER
+════════════════════════════════════════ -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <h1>Mua bán đồ cũ<br>gần bạn hơn bao giờ hết</h1>
+      <p>Hàng nghìn sản phẩm đang chờ bạn tại TP. Hồ Chí Minh</p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <i class="ti ti-tag" aria-hidden="true"></i>
+          <strong>1,240</strong> tin đăng hôm nay
+        </div>
+        <div class="hero-stat">
+          <i class="ti ti-users" aria-hidden="true"></i>
+          <strong>8,500+</strong> người dùng
+        </div>
+        <div class="hero-stat">
+          <i class="ti ti-map-pin" aria-hidden="true"></i>
+          <strong>63</strong> tỉnh thành
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     MAIN CONTENT
+════════════════════════════════════════ -->
+<div class="container">
+
+  <!-- ── DANH MỤC ── -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="ti ti-layout-grid" aria-hidden="true"></i>
+        Danh mục
+      </h2>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-item" onclick="document.querySelector('[data-cat=electronics]').click()">
+        <span class="cat-icon">💻</span>
+        <div class="cat-label">Điện tử</div>
+      </div>
+      <div class="cat-item" onclick="document.querySelector('[data-cat=fashion]').click()">
+        <span class="cat-icon">👗</span>
+        <div class="cat-label">Thời trang</div>
+      </div>
+      <div class="cat-item" onclick="document.querySelector('[data-cat=furniture]').click()">
+        <span class="cat-icon">🛋️</span>
+        <div class="cat-label">Nội thất</div>
+      </div>
+      <div class="cat-item" onclick="document.querySelector('[data-cat=vehicle]').click()">
+        <span class="cat-icon">🚲</span>
+        <div class="cat-label">Xe cộ</div>
+      </div>
+      <div class="cat-item" onclick="document.querySelector('[data-cat=books]').click()">
+        <span class="cat-icon">📚</span>
+        <div class="cat-label">Sách</div>
+      </div>
+      <div class="cat-item" onclick="document.querySelector('[data-cat=sports]').click()">
+        <span class="cat-icon">⚽</span>
+        <div class="cat-label">Thể thao</div>
+      </div>
+      <div class="cat-item" onclick="document.querySelector('[data-cat=kids]').click()">
+        <span class="cat-icon">🧸</span>
+        <div class="cat-label">Mẹ &amp; Bé</div>
+      </div>
+      <div class="cat-item" onclick="document.querySelector('[data-cat=other]').click()">
+        <span class="cat-icon">📦</span>
+        <div class="cat-label">Khác</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── TIN MỚI NHẤT ── -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="ti ti-clock" aria-hidden="true"></i>
+        Tin mới nhất
+      </h2>
+      <a href="#" class="section-link">
+        Xem thêm <i class="ti ti-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+
+    <div class="product-grid" id="productGrid">
+
+      <!-- Card 1 -->
+      <div class="product-card" data-id="1" data-cat="electronics">
+        <div class="product-img-placeholder">
+          <i class="ti ti-device-laptop" aria-hidden="true"></i>
+        </div>
+        <span class="product-badge badge-new">Mới</span>
+        <button class="product-fav" aria-label="Yêu thích">
+          <i class="ti ti-heart"></i>
+        </button>
+        <div class="product-info">
+          <div class="product-name">Laptop Dell XPS 13 2021 — còn bảo hành 6 tháng</div>
+          <div class="product-price">18.500.000 ₫</div>
+          <div class="product-meta">
+            <span class="product-location"><i class="ti ti-map-pin"></i> Quận 1</span>
+            <span>2 giờ trước</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="product-card" data-id="2" data-cat="fashion">
+        <div class="product-img-placeholder">
+          <i class="ti ti-shirt" aria-hidden="true"></i>
+        </div>
+        <button class="product-fav" aria-label="Yêu thích">
+          <i class="ti ti-heart"></i>
+        </button>
+        <div class="product-info">
+          <div class="product-name">Áo khoác denim Levi's size M mới 95%</div>
+          <div class="product-price">350.000 ₫</div>
+          <div class="product-meta">
+            <span class="product-location"><i class="ti ti-map-pin"></i> Bình Thạnh</span>
+            <span>3 giờ trước</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="product-card" data-id="3" data-cat="electronics">
+        <div class="product-img-placeholder">
+          <i class="ti ti-device-mobile" aria-hidden="true"></i>
+        </div>
+        <span class="product-badge badge-hot">Hot</span>
+        <button class="product-fav" aria-label="Yêu thích">
+          <i class="ti ti-heart"></i>
+        </button>
+        <div class="product-info">
+          <div class="product-name">iPhone 14 Pro Max 256GB Deep Purple</div>
+          <div class="product-price">24.000.000 ₫</div>
+          <div class="product-meta">
+            <span class="product-location"><i class="ti ti-map-pin"></i> Quận 7</span>
+            <span>5 giờ trước</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="product-card" data-id="4" data-cat="furniture">
+        <div class="product-img-placeholder">
+          <i class="ti ti-armchair" aria-hidden="true"></i>
+        </div>
+        <button class="product-fav" aria-label="Yêu thích">
+          <i class="ti ti-heart"></i>
+        </button>
+        <div class="product-info">
+          <div class="product-name">Bàn làm việc gỗ tự nhiên 120×60 cm</div>
+          <div class="product-price">1.200.000 ₫</div>
+          <div class="product-meta">
+            <span class="product-location"><i class="ti ti-map-pin"></i> Gò Vấp</span>
+            <span>1 ngày trước</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="product-card" data-id="5" data-cat="vehicle">
+        <div class="product-img-placeholder">
+          <i class="ti ti-bike" aria-hidden="true"></i>
+        </div>
+        <span class="product-badge badge-new">Mới</span>
+        <button class="product-fav" aria-label="Yêu thích">
+          <i class="ti ti-heart"></i>
+        </button>
+        <div class="product-info">
+          <div class="product-name">Xe đạp địa hình Giant ATX 2022 ít đi</div>
+          <div class="product-price">4.500.000 ₫</div>
+          <div class="product-meta">
+            <span class="product-location"><i class="ti ti-map-pin"></i> Thủ Đức</span>
+            <span>1 ngày trước</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="product-card" data-id="6" data-cat="books">
+        <div class="product-img-placeholder">
+          <i class="ti ti-book" aria-hidden="true"></i>
+        </div>
+        <button class="product-fav" aria-label="Yêu thích">
+          <i class="ti ti-heart"></i>
+        </button>
+        <div class="product-info">
+          <div class="product-name">Bộ sách Clean Code + The Pragmatic Programmer</div>
+          <div class="product-price">180.000 ₫</div>
+          <div class="product-meta">
+            <span class="product-location"><i class="ti ti-map-pin"></i> Quận 3</span>
+            <span>2 ngày trước</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 7 -->
+      <div class="product-card" data-id="7" data-cat="electronics">
+        <div class="product-img-placeholder">
+          <i class="ti ti-headphones" aria-hidden="true"></i>
+        </div>
+        <span class="product-badge badge-sold">Đã bán</span>
+        <button class="product-fav" aria-label="Yêu thích">
+          <i class="ti ti-heart"></i>
+        </button>
+        <div class="product-info">
+          <div class="product-name">Sony WH-1000XM5 Wireless Noise Cancelling</div>
+          <div class="product-price">5.800.000 ₫</div>
+          <div class="product-meta">
+            <span class="product-location"><i class="ti ti-map-pin"></i> Quận 10</span>
+            <span>2 ngày trước</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 8 -->
+      <div class="product-card" data-id="8" data-cat="sports">
+        <div class="product-img-placeholder">
+          <i class="ti ti-ball-basketball" aria-hidden="true"></i>
+        </div>
+        <button class="product-fav" aria-label="Yêu thích">
+          <i class="ti ti-heart"></i>
+        </button>
+        <div class="product-info">
+          <div class="product-name">Vợt cầu lông Yonex Astrox 88D Pro</div>
+          <div class="product-price">2.200.000 ₫</div>
+          <div class="product-meta">
+            <span class="product-location"><i class="ti ti-map-pin"></i> Tân Bình</span>
+            <span>3 ngày trước</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── GỢI Ý GẦN BẠN ── -->
+  <section class="section">
+    <div class="section-header">
+      <h2 class="section-title">
+        <i class="ti ti-map-pin" aria-hidden="true"></i>
+        Gần bạn nhất
+      </h2>
+      <a href="#" class="section-link">
+        Xem thêm <i class="ti ti-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+
+    <div class="product-grid">
+
+      <div class="product-card" data-id="9" data-cat="furniture">
+        <div class="product-img-placeholder">
+          <i class="ti ti-lamp" aria-hidden="true"></i>
+        </div>
+        <button class="product-fav" aria-label="Yêu thích">
+          <i class="ti ti-heart"></i>
+        </button>
+        <div class="product-info">
+          <div class="product-name">Đèn để bàn IKEA RANARP vintage</div>
+          <div class="product-price">250.000 ₫</div>
+          <div class="product-meta">
+            <span class="product-location"><i class="ti ti-map-pin"></i> 0.5 km</span>
+            <span>4 giờ trước</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card" data-id="10" data-cat="kids">
+        <div class="product-img-placeholder">
+          <i class="ti ti-baby-carriage" aria-hidden="true"></i>
+        </div>
+        <span class="product-badge badge-new">Mới</span>
+        <button class="product-fav" aria-label="Yêu thích">
+          <i class="ti ti-heart"></i>
+        </button>
+        <div class="product-info">
+          <div class="product-name">Xe đẩy em bé Aprica Karoon Air 2022</div>
+          <div class="product-price">3.800.000 ₫</div>
+          <div class="product-meta">
+            <span class="product-location"><i class="ti ti-map-pin"></i> 1.2 km</span>
+            <span>6 giờ trước</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card" data-id="11" data-cat="electronics">
+        <div class="product-img-placeholder">
+          <i class="ti ti-camera" aria-hidden="true"></i>
+        </div>
+        <button class="product-fav" aria-label="Yêu thích">
+          <i class="ti ti-heart"></i>
+        </button>
+        <div class="product-info">
+          <div class="product-name">Máy ảnh Sony A6400 + lens 16-50mm kit</div>
+          <div class="product-price">16.000.000 ₫</div>
+          <div class="product-meta">
+            <span class="product-location"><i class="ti ti-map-pin"></i> 1.8 km</span>
+            <span>8 giờ trước</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="product-card" data-id="12" data-cat="fashion">
+        <div class="product-img-placeholder">
+          <i class="ti ti-shoe" aria-hidden="true"></i>
+        </div>
+        <button class="product-fav" aria-label="Yêu thích">
+          <i class="ti ti-heart"></i>
+        </button>
+        <div class="product-info">
+          <div class="product-name">Nike Air Force 1 '07 trắng size 42 new</div>
+          <div class="product-price">1.500.000 ₫</div>
+          <div class="product-meta">
+            <span class="product-location"><i class="ti ti-map-pin"></i> 2.1 km</span>
+            <span>1 ngày trước</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</div><!-- /container -->
+
+<!-- ══════════════════════════════════════
+     FOOTER
+════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="row g-4">
+      <div class="col-md-4">
+        <div class="footer-brand">
+          <i class="ti ti-shopping-bag" aria-hidden="true"></i>
+          MarketLocal
+        </div>
+        <p class="footer-desc">Sàn mua bán đồ cũ theo khu vực. Kết nối người mua và người bán gần nhau, giao dịch nhanh chóng và an toàn.</p>
+      </div>
+
+      <div class="col-6 col-md-2 offset-md-2 footer-links">
+        <h6>Danh mục</h6>
+        <ul>
+          <li><a href="#">Điện tử</a></li>
+          <li><a href="#">Thời trang</a></li>
+          <li><a href="#">Nội thất</a></li>
+          <li><a href="#">Xe cộ</a></li>
+          <li><a href="#">Sách</a></li>
+        </ul>
+      </div>
+
+      <div class="col-6 col-md-2 footer-links">
+        <h6>Hỗ trợ</h6>
+        <ul>
+          <li><a href="#">Hướng dẫn đăng tin</a></li>
+          <li><a href="#">Chính sách bảo mật</a></li>
+          <li><a href="#">Điều khoản sử dụng</a></li>
+          <li><a href="#">Liên hệ</a></li>
+        </ul>
+      </div>
+
+      <div class="col-md-2 footer-links">
+        <h6>Liên kết</h6>
+        <ul>
+          <li><a href="auth.html">Đăng nhập</a></li>
+          <li><a href="post.html">Đăng tin miễn phí</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>© 2025 MarketLocal. All rights reserved.</span>
+      <span>Made with ❤️ bằng Firebase + GitHub Pages</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Custom JS -->
+<script src="/JS/home.js"></script>
+
+</body>
+</html>
