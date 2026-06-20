@@ -1,17 +1,18 @@
 // ════════════════════════════════════════
 // CONFIG — thay bằng thông tin thật của bạn
 // ════════════════════════════════════════
+
+// Firebase (keep your existing firebaseConfig)
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
+import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+
 const CLOUDINARY_CLOUD_NAME = 'dfdom0zpb';   // TODO: thay
 const CLOUDINARY_UPLOAD_PRESET = 'market_local';    // TODO: tạo Unsigned preset trên Cloudinary
 
 if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
   console.warn('Cloudinary config not set — update CLOUDINARY_CLOUD_NAME and CLOUDINARY_UPLOAD_PRESET in JS/post.js');
 }
-
-// Firebase (keep your existing firebaseConfig)
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyDsNtYcowBKtJw_doiE_JpV_d0KZaLMqA0",
