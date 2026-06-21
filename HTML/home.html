@@ -61,6 +61,41 @@
     @keyframes spin { to { transform: rotate(360deg); } }
 
     #productGrid { min-height: 200px; }
+
+    /* ── Province dropdown in location bar ── */
+    .location-select-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .location-select-wrap select {
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(255,255,255,0.25);
+      border: 1.5px solid rgba(26,115,232,0.35);
+      border-radius: 8px;
+      padding: 4px 28px 4px 10px;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary-dark);
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.15s, background 0.15s;
+      min-width: 145px;
+    }
+    .location-select-wrap select:hover,
+    .location-select-wrap select:focus {
+      background: rgba(255,255,255,0.55);
+      border-color: var(--primary);
+    }
+    .location-select-wrap > i {
+      position: absolute;
+      right: 7px;
+      font-size: 14px;
+      color: var(--primary-dark);
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -129,9 +164,47 @@
   <div class="container">
     <div class="location-inner">
       <i class="ti ti-map-pin" aria-hidden="true"></i>
-      Đang hiển thị sản phẩm tại:
-      <strong id="currentLocation">Toàn quốc</strong>
-      <button class="location-change" id="btnChangeLocation">Đổi khu vực</button>
+      Khu vực:
+      <div class="location-select-wrap">
+        <select id="provinceSelect">
+          <option value="">Toàn quốc</option>
+          <option>An Giang</option>
+          <option>Bắc Ninh</option>
+          <option>Cao Bằng</option>
+          <option>Cà Mau</option>
+          <option>Điện Biên</option>
+          <option>Đắk Lắk</option>
+          <option>Đồng Tháp</option>
+          <option>Gia Lai</option>
+          <option>Hà Tĩnh</option>
+          <option>Hưng Yên</option>
+          <option>Khánh Hòa</option>
+          <option>Lai Châu</option>
+          <option>Lâm Đồng</option>
+          <option>Lạng Sơn</option>
+          <option>Lào Cai</option>
+          <option>Nghệ An</option>
+          <option>Ninh Bình</option>
+          <option>Phú Thọ</option>
+          <option>Quảng Ngãi</option>
+          <option>Quảng Ninh</option>
+          <option>Quảng Trị</option>
+          <option>Sơn La</option>
+          <option>Tây Ninh</option>
+          <option>Thanh Hóa</option>
+          <option>Thái Nguyên</option>
+          <option>Tuyên Quang</option>
+          <option>Vĩnh Long</option>
+          <option>TP. Cần Thơ</option>
+          <option>TP. Đà Nẵng</option>
+          <option>TP. Đồng Nai</option>
+          <option>TP. Hà Nội</option>
+          <option>TP. Hải Phòng</option>
+          <option>TP. Hồ Chí Minh</option>
+          <option>TP. Huế</option>
+        </select>
+        <i class="ti ti-chevron-down" aria-hidden="true"></i>
+      </div>
     </div>
   </div>
 </div>

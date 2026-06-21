@@ -257,11 +257,7 @@ document.querySelectorAll('.filter-chip[data-cat]').forEach(chip => {
     document.querySelectorAll('.filter-chip[data-cat]').forEach(c => c.classList.remove('active'));
     chip.classList.add('active');
     currentCat = chip.dataset.cat;
-
-    const filtered = currentCat === 'all'
-      ? allListings
-      : allListings.filter(l => l.category === currentCat);
-    renderListings(filtered);
+    applyFilters();
   });
 });
 
@@ -278,20 +274,32 @@ document.querySelectorAll('.cat-item[data-cat]').forEach(item => {
 // SEARCH
 // ════════════════════════════════════════
 document.querySelectorAll('#globalSearch, #mobileSearch').forEach(input => {
-  input?.addEventListener('input', () => {
-    const q = input.value.toLowerCase().trim();
-    const source = currentCat === 'all' ? allListings : allListings.filter(l => l.category === currentCat);
-    const filtered = !q ? source : source.filter(l => l.title?.toLowerCase().includes(q));
-    renderListings(filtered);
-  });
+  input?.addEventListener('input', () => applyFilters());
 });
 
+// ── Central filter function ──
+function applyFilters() {
+  const province    = document.getElementById('provinceSelect')?.value || '';
+  const searchQuery = (document.getElementById('globalSearch')?.value ||
+                       document.getElementById('mobileSearch')?.value || '').toLowerCase().trim();
+
+  let result = allListings;
+  if (currentCat !== 'all') result = result.filter(l => l.category === currentCat);
+  if (province)             result = result.filter(l => l.province === province);
+  if (searchQuery)          result = result.filter(l => l.title?.toLowerCase().includes(searchQuery));
+  renderListings(result);
+}
+
 // ════════════════════════════════════════
-// LOCATION
+// PROVINCE FILTER
 // ════════════════════════════════════════
-document.getElementById('btnChangeLocation')?.addEventListener('click', () => {
-  const province = prompt('Nhập tỉnh / thành phố của bạn:');
-  if (province?.trim()) {
-    document.getElementById('currentLocation').textContent = province.trim();
-  }
+document.getElementById('provinceSelect')?.addEventListener('change', (e) => {
+  const province = e.target.value; // '' = Toàn quốc
+  const catFiltered = currentCat === 'all'
+    ? allListings
+    : allListings.filter(l => l.category === currentCat);
+  const filtered = !province
+    ? catFiltered
+    : catFiltered.filter(l => l.province === province);
+  renderListings(filtered);
 });
