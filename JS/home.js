@@ -60,14 +60,18 @@ function updateNavbar(user) {
   if (!loginBtn || !userMenu) return;
 
   if (user) {
-    loginBtn.style.display  = 'none';
-    userMenu.style.display  = 'flex';
+    // Thay vì dùng .style.display, ta quản lý class của Bootstrap
+    loginBtn.classList.add('d-none');
+    loginBtn.classList.remove('d-md-flex');
+    
+    userMenu.classList.remove('d-none');
+    userMenu.classList.add('d-md-flex');
 
-    // Show display name or email prefix
+    // Hiển thị tên hiển thị hoặc tiền tố email
     const name = user.displayName || user.email?.split('@')[0] || 'Bạn';
     if (userName) userName.textContent = name;
 
-    // Avatar: photo or initials
+    // Avatar: ảnh hoặc chữ cái đầu
     if (userAvatar) {
       if (user.photoURL) {
         userAvatar.innerHTML = `<img src="${user.photoURL}" alt="avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
@@ -76,8 +80,12 @@ function updateNavbar(user) {
       }
     }
   } else {
-    loginBtn.style.display  = 'flex';
-    userMenu.style.display  = 'none';
+    // Trả lại trạng thái khi chưa đăng nhập
+    loginBtn.classList.remove('d-none');
+    loginBtn.classList.add('d-md-flex');
+    
+    userMenu.classList.add('d-none');
+    userMenu.classList.remove('d-md-flex');
   }
 }
 

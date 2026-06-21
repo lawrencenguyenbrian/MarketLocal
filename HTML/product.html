@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chi tiết sản phẩm — MarketLocal</title>
+  <link rel="icon" type="image/png" href="/images/icon.png">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <link rel="stylesheet" href="/CSS/product.css" />
+</head>
+<body>
+
+<!-- ════════════ NAVBAR ════════════ -->
+<nav class="navbar">
+  <div class="container">
+    <div class="navbar-inner">
+      <a href="home.html" class="navbar-brand">
+        <i class="ti ti-shopping-bag"></i>
+        MarketLocal
+      </a>
+      <button class="btn-back" onclick="history.back()">
+        <i class="ti ti-arrow-left"></i>
+        Quay lại
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ════════════ LOADING STATE ════════════ -->
+<div id="loadingState" class="loading-state">
+  <div class="spinner-large"></div>
+  <p>Đang tải sản phẩm...</p>
+</div>
+
+<!-- ════════════ ERROR STATE ════════════ -->
+<div id="errorState" class="error-state" style="display:none">
+  <div style="font-size:48px;margin-bottom:12px">😕</div>
+  <h2>Không tìm thấy sản phẩm</h2>
+  <p>Tin đăng này có thể đã bị xoá hoặc không tồn tại.</p>
+  <a href="home.html" class="btn-primary-link">← Về trang chủ</a>
+</div>
+
+<!-- ════════════ MAIN CONTENT ════════════ -->
+<div id="productContent" class="container product-container" style="display:none">
+
+  <!-- Breadcrumb -->
+  <nav class="breadcrumb-nav">
+    <a href="home.html">Trang chủ</a>
+    <i class="ti ti-chevron-right"></i>
+    <span id="breadCat">Sản phẩm</span>
+    <i class="ti ti-chevron-right"></i>
+    <span id="breadTitle" class="breadcrumb-current">Chi tiết</span>
+  </nav>
+
+  <div class="product-layout">
+
+    <!-- LEFT: Images -->
+    <div class="product-images">
+      <div class="main-image-wrap" id="mainImageWrap">
+        <img id="mainImage" src="" alt="Ảnh sản phẩm" class="main-image" style="display:none" />
+        <div id="mainImagePlaceholder" class="main-image-placeholder">
+          <i class="ti ti-photo"></i>
+        </div>
+        <button class="img-arrow img-arrow-left" id="imgPrev"><i class="ti ti-chevron-left"></i></button>
+        <button class="img-arrow img-arrow-right" id="imgNext"><i class="ti ti-chevron-right"></i></button>
+        <div class="img-counter" id="imgCounter"></div>
+      </div>
+      <div class="thumbnail-row" id="thumbnailRow"></div>
+    </div>
+
+    <!-- RIGHT: Info -->
+    <div class="product-info-panel">
+
+      <div class="product-tags">
+        <span class="tag-category" id="tagCategory"></span>
+        <span class="tag-condition" id="tagCondition"></span>
+      </div>
+
+      <h1 class="product-title" id="productTitle">Đang tải...</h1>
+      <div class="product-price" id="productPrice">—</div>
+
+      <div class="product-meta-row">
+        <span><i class="ti ti-map-pin"></i> <span id="productProvince">—</span></span>
+        <span><i class="ti ti-clock"></i> <span id="productTime">—</span></span>
+        <span><i class="ti ti-eye"></i> <span id="productViews">0</span> lượt xem</span>
+      </div>
+
+      <div class="section-block">
+        <div class="section-block-title"><i class="ti ti-file-description"></i> Mô tả sản phẩm</div>
+        <div class="product-desc" id="productDesc">Không có mô tả.</div>
+      </div>
+
+      <div class="seller-card">
+        <div class="seller-avatar" id="sellerAvatar">?</div>
+        <div class="seller-info">
+          <div class="seller-name" id="sellerName">Đang tải...</div>
+          <div class="seller-meta"><i class="ti ti-map-pin"></i> <span id="sellerProvince">—</span></div>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn-contact" id="btnContact">
+          <i class="ti ti-message-circle"></i>
+          Nhắn tin người bán
+        </button>
+        <button class="btn-fav" id="btnFav" title="Lưu yêu thích">
+          <i class="ti ti-heart" id="favIcon"></i>
+        </button>
+      </div>
+
+      <div class="phone-row" id="phoneRow" style="display:none">
+        <i class="ti ti-phone"></i>
+        <a id="productPhone" href=""></a>
+      </div>
+
+      <button class="btn-share" id="btnShare">
+        <i class="ti ti-share"></i> Chia sẻ tin này
+      </button>
+
+    </div>
+  </div>
+
+  <div class="safety-note">
+    <i class="ti ti-shield-check"></i>
+    Giao dịch cẩn thận, ưu tiên gặp mặt trực tiếp ở nơi công cộng.
+    <a href="#">Báo cáo tin này</a>
+  </div>
+
+</div>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" style="display:none">
+  <div class="lightbox-backdrop" id="lightboxBackdrop"></div>
+  <button class="lightbox-close" id="lightboxClose"><i class="ti ti-x"></i></button>
+  <button class="lightbox-arrow lightbox-prev" id="lightboxPrev"><i class="ti ti-chevron-left"></i></button>
+  <img class="lightbox-img" id="lightboxImg" src="" alt="" />
+  <button class="lightbox-arrow lightbox-next" id="lightboxNext"><i class="ti ti-chevron-right"></i></button>
+  <div class="lightbox-counter" id="lightboxCounter"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script type="module" src="/JS/product.js"></script>
+</body>
+</html>
