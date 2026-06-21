@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tài khoản - MarketLocal</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <link rel="stylesheet" href="/CSS/home.css" />
+  <style>
+    .profile-avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; }
+  </style>
+</head>
+<body>
+  <!-- Navbar (same as home) -->
+  <nav class="navbar navbar-expand-md py-2">
+    <div class="container">
+      <a href="home.html" class="navbar-brand">
+        <i class="ti ti-shopping-bag"></i> MarketLocal
+      </a>
+      <a href="post.html" class="btn-nav btn-nav-primary ms-auto">
+        <i class="ti ti-plus"></i> Đăng tin
+      </a>
+    </div>
+  </nav>
+
+  <div class="container mt-5">
+    <div class="row">
+      <div class="col-lg-4">
+        <div class="card text-center p-4">
+          <div id="profileAvatar" class="mx-auto mb-3"></div>
+          <h4 id="profileName">Loading...</h4>
+          <p id="profileEmail" class="text-muted"></p>
+          <button class="btn btn-outline-primary mt-3" onclick="logout()">Đăng xuất</button>
+        </div>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="card">
+          <div class="card-header">
+            <h5>Thông tin cá nhân</h5>
+          </div>
+          <div class="card-body">
+            <form id="profileForm">
+              <div class="mb-3">
+                <label class="form-label">Họ tên</label>
+                <input type="text" id="editName" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Tỉnh/Thành phố</label>
+                <select id="editProvince" class="form-select"></select>
+              </div>
+              <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="mt-4">
+          <h5>Tin đăng của tôi</h5>
+          <div id="myListings" class="row"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/JS/account.js"></script>
+</body>
+</html>

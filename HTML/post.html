@@ -14,17 +14,38 @@
 <!-- ══════════════════════════════════
      NAVBAR
 ══════════════════════════════════ -->
-<nav class="navbar">
+<nav class="navbar navbar-expand-md py-2">
   <div class="container">
-    <div class="navbar-inner">
-      <a href="index.html" class="navbar-brand">
-        <i class="ti ti-shopping-bag" aria-hidden="true"></i>
-        MarketLocal
-      </a>
-      <span class="navbar-title">Đăng tin mới</span>
-      <button class="btn-back" onclick="history.back()">
-        <i class="ti ti-arrow-left" aria-hidden="true"></i>
-        Quay lại
+    <a href="home.html" class="navbar-brand">
+      <i class="ti ti-shopping-bag" aria-hidden="true"></i>
+      MarketLocal
+    </a>
+
+    <span class="navbar-title d-none d-md-block">Đăng tin mới</span>
+
+    <div class="nav-actions ms-auto d-flex align-items-center gap-2">
+      <!-- User menu (from previous instructions) -->
+      <div class="nav-user-menu d-none d-md-flex" id="navUserMenu">
+        <div class="nav-avatar" id="navUserAvatar" title="Tài khoản"></div>
+        <span class="nav-user-name" id="navUserName"></span>
+        
+        <div class="dropdown">
+          <button class="btn btn-link text-dark dropdown-toggle p-0 ms-2" type="button" data-bs-toggle="dropdown">
+            <i class="ti ti-user"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><a class="dropdown-item" href="account.html"><i class="ti ti-user me-2"></i>Tài khoản của tôi</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><button class="dropdown-item text-danger" id="navLogoutBtn">
+              <i class="ti ti-logout me-2"></i>Đăng xuất
+            </button></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Back button - now properly placed and visible on mobile -->
+      <button class="btn-back d-md-none" onclick="history.back()">
+        <i class="ti ti-arrow-left"></i>
       </button>
     </div>
   </div>

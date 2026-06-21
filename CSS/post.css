@@ -57,9 +57,9 @@ a { text-decoration: none; color: inherit; }
 .navbar-brand i { font-size: 20px; }
 
 .navbar-title {
-  font-size: 15px;
   font-weight: 600;
   color: var(--text-main);
+  margin: 0 1rem;
 }
 
 .navbar-title::before {
@@ -70,23 +70,21 @@ a { text-decoration: none; color: inherit; }
 }
 
 .btn-back {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-muted);
   background: none;
   border: none;
-  cursor: pointer;
-  font-family: inherit;
+  color: var(--text-main);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   padding: 6px 10px;
   border-radius: 8px;
-  transition: background 0.15s;
+  cursor: pointer;
 }
 
-.btn-back:hover { background: var(--bg); }
+.btn-back:hover {
+  background: var(--bg);
+}
 
 /* LAYOUT */
 .page-wrap {
