@@ -269,15 +269,6 @@ document.querySelectorAll('.filter-chip[data-cat]').forEach(chip => {
   });
 });
 
-// Category grid shortcuts
-document.querySelectorAll('.cat-item[data-cat]').forEach(item => {
-  item.addEventListener('click', () => {
-    const chip = document.querySelector(`.filter-chip[data-cat="${item.dataset.cat}"]`);
-    if (chip) chip.click();
-    document.querySelector('.section')?.scrollIntoView({ behavior: 'smooth' });
-  });
-});
-
 // ════════════════════════════════════════
 // SEARCH
 // ════════════════════════════════════════
