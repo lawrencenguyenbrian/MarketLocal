@@ -263,7 +263,7 @@ document.getElementById('btnFav').addEventListener('click', async () => {
 // ════════════════════════════════════════
 // CONTACT BUTTON
 // ════════════════════════════════════════
-document.getElementById('btnContact').addEventListener('click', () => {
+document.getElementById('btnContact').addEventListener('click', async () => {
   if (!currentUser) {
     alert('Vui lòng đăng nhập để nhắn tin người bán.');
     window.location.href = 'auth.html';
@@ -273,8 +273,9 @@ document.getElementById('btnContact').addEventListener('click', () => {
     alert('Đây là tin đăng của bạn.');
     return;
   }
-  // W3: redirect to chat page
-  alert('Tính năng nhắn tin sẽ ra mắt sớm! 💬');
+
+  const chatUrl = `chat.html?listing=${listingId}&seller=${listing.ownerId}`;
+  window.location.href = chatUrl;
 });
 
 // ════════════════════════════════════════
