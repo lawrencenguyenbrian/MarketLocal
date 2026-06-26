@@ -43,46 +43,53 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // ════════════════════════════════════════
-// SHARED NAVBAR UPDATER (copy this function)
+// NAVBAR UPDATER
 // ════════════════════════════════════════
 function updateNavbar(user) {
-  const userMenu = document.getElementById("navUserMenu");
-  const userAvatar = document.getElementById("navUserAvatar");
-  const userName = document.getElementById("navUserName");
+  const userMenu   = document.getElementById('navUserMenu');
+  const userAvatar = document.getElementById('navUserAvatar');
+  const userName   = document.getElementById('navUserName');
 
-  if (!userMenu) return; // Safety check
+  if (!user || !userMenu) return;
 
-  if (user) {
-    userMenu.classList.remove("d-none");
-    userMenu.classList.add("d-md-flex");
+  userMenu.style.display = 'flex';
 
-    const name = user.displayName || user.email?.split("@")[0] || "Bạn";
-    if (userName) userName.textContent = name;
+  const name = user.displayName || user.email?.split('@')[0] || 'Bạn';
+  if (userName) userName.textContent = name;
 
-    if (userAvatar) {
-      if (user.photoURL) {
-        userAvatar.innerHTML = `<img src="${user.photoURL}" alt="avatar" style="width:100%;height:100%;border-radius:50%;object-fit:cover">`;
-      } else {
-        userAvatar.textContent = name.charAt(0).toUpperCase();
-      }
+  if (userAvatar) {
+    if (user.photoURL) {
+      userAvatar.innerHTML = `<img src="${user.photoURL}" alt="avatar" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+    } else {
+      userAvatar.textContent = name.charAt(0).toUpperCase();
+      userAvatar.style.background = '#0d6efd';
+      userAvatar.style.color = 'white';
+      userAvatar.style.display = 'flex';
+      userAvatar.style.alignItems = 'center';
+      userAvatar.style.justifyContent = 'center';
+      userAvatar.style.fontWeight = 'bold';
     }
-  } else {
-    userMenu.classList.add("d-none");
-    userMenu.classList.remove("d-md-flex");
   }
 }
 
-// Call it when auth state changes
+// Update auth listener
 onAuthStateChanged(auth, (user) => {
   currentUser = user;
   if (!user) {
-    showToast("Vui lòng đăng nhập để đăng tin.", "error");
-    setTimeout(() => {
-      window.location.href = "auth.html";
-    }, 1200);
+    showToast('Vui lòng đăng nhập để đăng tin.', 'error');
+    setTimeout(() => { window.location.href = 'auth.html'; }, 1200);
     return;
   }
-  updateNavbar(user); // ← This makes the menu show
+  updateNavbar(user);
+});
+
+// Logout handler
+document.addEventListener('click', async (e) => {
+  if (e.target && e.target.id === 'navLogoutBtn') {
+    const { signOut } = await import('https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js');
+    await signOut(auth);
+    window.location.href = 'auth.html';
+  }
 });
 
 // ════════════════════════════════════════
