@@ -28,13 +28,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ── If already logged in, redirect to home ──
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    window.location.href = 'home.html';
-  }
-});
-
 // ── Tab switching ──
 const tabs = document.querySelectorAll('.auth-tab');
 const sections = document.querySelectorAll('.form-section');
@@ -155,6 +148,15 @@ document.querySelectorAll('.btn-google').forEach(btn => {
       showAlert('loginAlert', err.message || 'Google Sign-In thất bại.', 'danger');
     }
   });
+});
+
+// ── Auth State Listener (đặt ở cuối file) ──
+onAuthStateChanged(auth, (user) => {
+  // Chỉ redirect khi đã đăng nhập thành công và không ở trang auth
+  if (user && !window.location.pathname.includes('auth.html') && 
+      !window.location.pathname.includes('home.html')) {
+    window.location.href = 'home.html';
+  }
 });
 
 // ── Friendly error messages ──

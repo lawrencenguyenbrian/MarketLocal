@@ -5,7 +5,14 @@ import {
   doc, getDoc, setDoc, addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, where
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-const firebaseConfig = { /* copy từ các file khác */ };
+const firebaseConfig = {
+  apiKey: "AIzaSyDsNtYcowBKtJw_doiE_JpV_d0KZaLMqA0",
+  authDomain: "marketlocal-e4ab7.firebaseapp.com",
+  projectId: "marketlocal-e4ab7",
+  storageBucket: "marketlocal-e4ab7.firebasestorage.app",
+  messagingSenderId: "257007076578",
+  appId: "1:257007076578:web:5e8897d117868494cf8abb"
+};
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);

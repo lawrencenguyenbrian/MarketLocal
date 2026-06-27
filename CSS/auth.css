@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&display=swap");
 
 :root {
   --primary: #1a73e8;
@@ -9,7 +9,7 @@
   --bg: #f8f9fa;
   --white: #ffffff;
   --radius: 12px;
-  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 * {
@@ -19,7 +19,7 @@
 }
 
 body {
-  font-family: 'Be Vietnam Pro', sans-serif;
+  font-family: "Be Vietnam Pro", sans-serif;
   background-color: var(--bg);
   min-height: 100vh;
   display: flex;
@@ -47,21 +47,25 @@ body {
 }
 
 .auth-banner::before {
-  content: '';
+  content: "";
   position: absolute;
-  top: -80px; right: -80px;
-  width: 320px; height: 320px;
+  top: -80px;
+  right: -80px;
+  width: 320px;
+  height: 320px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.07);
+  background: rgba(255, 255, 255, 0.07);
 }
 
 .auth-banner::after {
-  content: '';
+  content: "";
   position: absolute;
-  bottom: -60px; left: -60px;
-  width: 240px; height: 240px;
+  bottom: -60px;
+  left: -60px;
+  width: 240px;
+  height: 240px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .banner-logo {
@@ -74,7 +78,9 @@ body {
   gap: 8px;
 }
 
-.banner-logo i { font-size: 24px; }
+.banner-logo i {
+  font-size: 24px;
+}
 
 .banner-tagline {
   font-size: 32px;
@@ -105,7 +111,10 @@ body {
   opacity: 0.9;
 }
 
-.banner-feature i { font-size: 18px; opacity: 0.9; }
+.banner-feature i {
+  font-size: 18px;
+  opacity: 0.9;
+}
 
 /* ── Form panel ── */
 .auth-panel {
@@ -147,17 +156,23 @@ body {
 }
 
 .auth-tab.active::after {
-  content: '';
+  content: "";
   position: absolute;
-  bottom: -1.5px; left: 0; right: 0;
+  bottom: -1.5px;
+  left: 0;
+  right: 0;
   height: 2px;
   background: var(--primary);
   border-radius: 2px;
 }
 
 /* ── Form ── */
-.form-section { display: none; }
-.form-section.active { display: block; }
+.form-section {
+  display: none;
+}
+.form-section.active {
+  display: block;
+}
 
 .form-title {
   font-size: 22px;
@@ -207,7 +222,9 @@ body {
   font-family: inherit;
   font-size: 14px;
   color: var(--text-main);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
   outline: none;
   background: var(--white);
 }
@@ -215,7 +232,7 @@ body {
 .form-group input:focus,
 .form-group select:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(26,115,232,0.1);
+  box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
 }
 
 .form-group input::placeholder {
@@ -269,7 +286,9 @@ body {
   font-weight: 500;
 }
 
-.form-link:hover { text-decoration: underline; }
+.form-link:hover {
+  text-decoration: underline;
+}
 
 /* ── Submit button ── */
 .btn-primary {
@@ -283,11 +302,17 @@ body {
   font-size: 14.5px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, transform 0.1s;
+  transition:
+    background 0.15s,
+    transform 0.1s;
 }
 
-.btn-primary:hover { background: var(--primary-hover); }
-.btn-primary:active { transform: scale(0.99); }
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+.btn-primary:active {
+  transform: scale(0.99);
+}
 
 /* ── Divider ── */
 .divider {
@@ -301,7 +326,7 @@ body {
 
 .divider::before,
 .divider::after {
-  content: '';
+  content: "";
   flex: 1;
   height: 1px;
   background: var(--border);
@@ -323,7 +348,9 @@ body {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  transition: background 0.15s, border-color 0.15s;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
 }
 
 .btn-google:hover {
@@ -366,4 +393,19 @@ body {
     align-items: flex-start;
     padding-top: 3rem;
   }
+}
+
+.input-wrap {
+  position: relative;
+}
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 4px;
 }
