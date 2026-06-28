@@ -5,6 +5,8 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  sendPasswordResetEmail,
+  updateProfile,
   onAuthStateChanged
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
 import {
@@ -27,6 +29,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const redirectUrl = safeRedirect(new URLSearchParams(window.location.search).get('redirect'));
 
 // ── Tab switching ──
 const tabs = document.querySelectorAll('.auth-tab');
@@ -43,18 +46,18 @@ tabs.forEach(tab => {
 });
 
 // ── Toggle password visibility ──
-document.querySelectorAll('.toggle-password').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const input = btn.closest('.input-wrap').querySelector('input');
-    const icon = btn.querySelector('i');
-    if (input.type === 'password') {
-      input.type = 'text';
-      icon.className = 'ti ti-eye-off';
-    } else {
-      input.type = 'password';
-      icon.className = 'ti ti-eye';
-    }
-  });
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.toggle-password');
+  if (!btn) return;
+
+  const input = btn.closest('.input-wrap')?.querySelector('input');
+  const icon = btn.querySelector('i');
+  if (!input || !icon) return;
+
+  const shouldShow = input.type === 'password';
+  input.type = shouldShow ? 'text' : 'password';
+  icon.className = shouldShow ? 'ti ti-eye-off' : 'ti ti-eye';
+  btn.setAttribute('aria-label', shouldShow ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
 });
 
 // ── Save user profile to Firestore ──
@@ -93,7 +96,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     const cred = await signInWithEmailAndPassword(auth, email, password);
     await saveUserProfile(cred.user);
     showAlert('loginAlert', 'Đăng nhập thành công! Đang chuyển hướng...', 'success');
-    setTimeout(() => { window.location.href = 'home.html'; }, 800);
+    setTimeout(() => { window.location.href = redirectUrl; }, 800);
   } catch (err) {
     const msg = friendlyError(err.code);
     showAlert('loginAlert', msg, 'danger');
@@ -126,9 +129,10 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(cred.user, { displayName: name });
     await saveUserProfile(cred.user, { name, province });
     showAlert('registerAlert', 'Đăng ký thành công! Đang chuyển hướng...', 'success');
-    setTimeout(() => { window.location.href = 'home.html'; }, 800);
+    setTimeout(() => { window.location.href = redirectUrl; }, 800);
   } catch (err) {
     const msg = friendlyError(err.code);
     showAlert('registerAlert', msg, 'danger');
@@ -139,15 +143,34 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
 document.querySelectorAll('.btn-google').forEach(btn => {
   btn.addEventListener('click', async () => {
     const provider = new GoogleAuthProvider();
+    const activeAlertId = document.getElementById('register').classList.contains('active')
+      ? 'registerAlert'
+      : 'loginAlert';
     try {
       const result = await signInWithPopup(auth, provider);
       await saveUserProfile(result.user);
-      showAlert('loginAlert', 'Đăng nhập Google thành công! Đang chuyển hướng...', 'success');
-      setTimeout(() => { window.location.href = 'home.html'; }, 800);
+      showAlert(activeAlertId, 'Đăng nhập Google thành công! Đang chuyển hướng...', 'success');
+      setTimeout(() => { window.location.href = redirectUrl; }, 800);
     } catch (err) {
-      showAlert('loginAlert', err.message || 'Google Sign-In thất bại.', 'danger');
+      showAlert(activeAlertId, err.message || 'Google Sign-In thất bại.', 'danger');
     }
   });
+});
+
+document.querySelector('.form-link')?.addEventListener('click', async (e) => {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  if (!email) {
+    showAlert('loginAlert', 'Nhập email trước khi đặt lại mật khẩu.', 'warning');
+    return;
+  }
+
+  try {
+    await sendPasswordResetEmail(auth, email);
+    showAlert('loginAlert', 'Đã gửi email đặt lại mật khẩu. Vui lòng kiểm tra hộp thư.', 'success');
+  } catch (err) {
+    showAlert('loginAlert', friendlyError(err.code), 'danger');
+  }
 });
 
 // ── Auth State Listener (đặt ở cuối file) ──
@@ -166,6 +189,7 @@ function friendlyError(code) {
     'auth/wrong-password':       'Mật khẩu không đúng.',
     'auth/email-already-in-use': 'Email này đã được đăng ký.',
     'auth/invalid-email':        'Email không hợp lệ.',
+    'auth/missing-email':        'Vui lòng nhập email.',
     'auth/too-many-requests':    'Quá nhiều lần thử. Vui lòng thử lại sau.',
     'auth/network-request-failed': 'Lỗi kết nối mạng.',
   };
@@ -178,4 +202,16 @@ function showAlert(id, message, type) {
   el.className = `alert alert-${type} py-2 px-3 mt-3`;
   el.style.display = 'block';
   el.textContent = message;
+}
+
+function safeRedirect(rawUrl) {
+  if (!rawUrl) return 'home.html';
+
+  try {
+    const url = new URL(rawUrl, window.location.href);
+    if (url.origin !== window.location.origin) return 'home.html';
+    return url.href;
+  } catch {
+    return 'home.html';
+  }
 }

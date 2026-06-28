@@ -239,18 +239,36 @@ body {
   color: #b0b7c3;
 }
 
+.input-wrap input[type="password"],
+.input-wrap input[type="text"][autocomplete="current-password"],
+.input-wrap input[type="text"][autocomplete="new-password"] {
+  padding-right: 48px;
+}
+
 .toggle-password {
   position: absolute;
-  right: 12px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   cursor: pointer;
   color: var(--text-muted);
   font-size: 17px;
   padding: 0;
   line-height: 1;
+  z-index: 2;
+}
+
+.form-group .input-wrap .toggle-password i {
+  position: static;
+  transform: none;
+  pointer-events: auto;
 }
 
 /* ── Options row ── */
@@ -400,12 +418,12 @@ body {
 }
 .toggle-password {
   position: absolute;
-  right: 12px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
   border: none;
   color: #6c757d;
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
 }

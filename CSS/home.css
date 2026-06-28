@@ -259,6 +259,24 @@ a {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.mobile-quick-menu {
+  display: none;
+}
+
+.mobile-quick-menu a,
+.mobile-quick-menu button {
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--text-main);
+  font: inherit;
+  text-align: left;
+}
 .btn-logout {
   padding: 6px 12px;
   border: 1.5px solid var(--border);
@@ -735,6 +753,20 @@ a {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 576px) {
+  .mobile-quick-menu {
+    display: grid;
+    gap: 6px;
+    padding: 10px 16px;
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .mobile-quick-menu a,
+  .mobile-quick-menu button {
+    display: flex;
+  }
+
   .hero h1 {
     font-size: 20px;
   }

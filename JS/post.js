@@ -8,6 +8,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebas
 import {
   getAuth,
   onAuthStateChanged,
+  signOut,
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js";
 import {
   getFirestore,
@@ -30,17 +31,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 let currentUser = null;
-
-// ── Redirect to login if not authenticated ──
-onAuthStateChanged(auth, (user) => {
-  currentUser = user;
-  if (!user) {
-    showToast("Vui lòng đăng nhập để đăng tin.", "error");
-    setTimeout(() => {
-      window.location.href = "auth.html";
-    }, 1200);
-  }
-});
 
 // ════════════════════════════════════════
 // NAVBAR UPDATER
@@ -81,15 +71,6 @@ onAuthStateChanged(auth, (user) => {
     return;
   }
   updateNavbar(user);
-});
-
-// Logout handler
-document.addEventListener('click', async (e) => {
-  if (e.target && e.target.id === 'navLogoutBtn') {
-    const { signOut } = await import('https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js');
-    await signOut(auth);
-    window.location.href = 'auth.html';
-  }
 });
 
 // ════════════════════════════════════════
@@ -133,12 +114,17 @@ uploadZone.addEventListener("drop", (e) => {
 fileInput.addEventListener("change", () => handleFiles(fileInput.files));
 
 function handleFiles(files) {
-  if (uploadedImages.length + files.length > 6) {
+  const imageFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
+
+  if (uploadedImages.length + imageFiles.length > 6) {
     showToast("Tối đa 6 ảnh mỗi tin đăng", "error");
     return;
   }
-  Array.from(files).forEach((file) => {
-    if (!file.type.startsWith("image/")) return;
+  imageFiles.forEach((file) => {
+    if (file.size > 5 * 1024 * 1024) {
+      showToast(`Ảnh "${file.name}" vượt quá 5MB`, "error");
+      return;
+    }
     const localUrl = URL.createObjectURL(file);
     const index = uploadedImages.length;
     uploadedImages.push({ localUrl, cloudUrl: null, publicId: null });
@@ -326,15 +312,16 @@ document.getElementById("postForm").addEventListener("submit", async (e) => {
         currentUser.displayName ||
         currentUser.email?.split("@")[0] ||
         "Ẩn danh",
+      ownerEmail: currentUser.email || "",
       status: "active",
       views: 0,
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
 
-    showToast("Đăng tin thành công! 🎉", "success");
+    showToast("Đăng tin thành công!", "success");
     setTimeout(() => {
-      window.location.href = "home.html";
+      window.location.href = `product.html?id=${docRef.id}`;
     }, 1200);
   } catch (err) {
     console.error("Firestore error:", err);
@@ -364,8 +351,6 @@ function showToast(message, type = "info") {
 
 // Logout handler
 document.getElementById("navLogoutBtn")?.addEventListener("click", async () => {
-  const { signOut } =
-    await import("https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js");
   await signOut(auth);
   window.location.href = "auth.html";
 });

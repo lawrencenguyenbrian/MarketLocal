@@ -2,7 +2,15 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebas
 import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
 import {
   getFirestore,
-  doc, getDoc, setDoc, addDoc, collection, query, orderBy, onSnapshot, serverTimestamp, where
+  doc,
+  getDoc,
+  setDoc,
+  addDoc,
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp
 } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
 const firebaseConfig = {
@@ -20,6 +28,8 @@ const db = getFirestore(app);
 let currentUser = null;
 let chatId = null;
 let unsubscribe = null;
+let chatReady = false;
+let activeChatData = null;
 
 // Lấy chatId từ URL (?chat=xxx) hoặc tạo mới
 const urlParams = new URLSearchParams(window.location.search);
@@ -28,41 +38,63 @@ chatId = urlParams.get('chat');
 // Init
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
-    window.location.href = 'auth.html';
+    window.location.href = `auth.html?redirect=${encodeURIComponent(window.location.href)}`;
     return;
   }
+
   currentUser = user;
-  if (chatId) {
-    await loadChat();
-  } else {
-    // Tạo chat mới từ product page
-    const listingId = urlParams.get('listing');
-    const sellerId = urlParams.get('seller');
-    if (listingId && sellerId) {
-      chatId = await getOrCreateChat(listingId, sellerId);
-      if (chatId) await loadChat();
+  setComposerEnabled(false);
+  renderChatStatus('Đang mở cuộc trò chuyện...');
+
+  try {
+    if (chatId) {
+      await loadChat();
+      return;
     }
+
+    const listingId = urlParams.get('listing');
+    if (!listingId) {
+      renderChatError('Thiếu thông tin cuộc trò chuyện.');
+      return;
+    }
+
+    chatId = await getOrCreateChat(listingId);
+    await loadChat();
+  } catch (err) {
+    console.error('Chat init error:', err);
+    renderChatError(errorMessage(err));
   }
 });
 
-async function getOrCreateChat(listingId, sellerId) {
-  // Tìm chat cũ
-  const q = query(
-    collection(db, 'chats'),
-    where('participants', 'array-contains', currentUser.uid)
-  );
+async function getOrCreateChat(listingId) {
+  const listingSnap = await getDoc(doc(db, 'listings', listingId));
+  if (!listingSnap.exists()) {
+    throw new Error('Tin đăng không tồn tại hoặc đã bị xoá.');
+  }
 
-  // Logic tìm chat giữa 2 người + listing (có thể cải tiến sau)
-  // Hiện tại dùng cách đơn giản: tạo mới hoặc tìm theo participants
-  const chatRef = doc(db, 'chats', `${currentUser.uid}_${sellerId}`); // deterministic ID
+  const listing = { id: listingSnap.id, ...listingSnap.data() };
+  const sellerId = listing.ownerId || urlParams.get('seller');
+  if (!sellerId) {
+    throw new Error('Tin đăng này chưa có thông tin người bán.');
+  }
+  if (sellerId === currentUser.uid) {
+    throw new Error('Bạn không thể tự nhắn tin cho tin đăng của mình.');
+  }
+
+  const participants = [currentUser.uid, sellerId].sort();
+  const chatRef = doc(db, 'chats', buildChatId(listingId, participants));
   const snap = await getDoc(chatRef);
 
   if (snap.exists()) return chatRef.id;
 
   // Tạo mới
   await setDoc(chatRef, {
-    participants: [currentUser.uid, sellerId],
-    listingId: listingId,
+    participants,
+    listingId,
+    buyerId: currentUser.uid,
+    sellerId,
+    listingTitle: listing.title || '',
+    listingImage: listing.images?.[0]?.url || '',
     lastMessage: '',
     lastUpdated: serverTimestamp()
   });
@@ -71,16 +103,27 @@ async function getOrCreateChat(listingId, sellerId) {
 }
 
 async function loadChat() {
+  chatReady = false;
+  setComposerEnabled(false);
+
   const chatRef = doc(db, 'chats', chatId);
   const chatSnap = await getDoc(chatRef);
 
   if (!chatSnap.exists()) {
-    alert('Cuộc trò chuyện không tồn tại');
+    renderChatError('Cuộc trò chuyện không tồn tại.');
     return;
   }
 
   const chatData = chatSnap.data();
-  renderChatHeader(chatData);
+  if (!chatData.participants?.includes(currentUser.uid)) {
+    renderChatError('Bạn không có quyền xem cuộc trò chuyện này.');
+    return;
+  }
+
+  activeChatData = chatData;
+  await renderChatHeader(chatData);
+  chatReady = true;
+  setComposerEnabled(true);
 
   // Realtime messages
   const messagesRef = collection(db, 'chats', chatId, 'messages');
@@ -98,54 +141,132 @@ async function loadChat() {
       const msgEl = document.createElement('div');
       msgEl.className = `message ${isMe ? 'message-me' : 'message-other'}`;
       msgEl.innerHTML = `
-        <div class="message-bubble">${msg.text}</div>
+        <div class="message-bubble">${escHtml(msg.text)}</div>
         <small class="message-time">${formatTime(msg.createdAt?.toDate())}</small>
       `;
       messagesDiv.appendChild(msgEl);
     });
 
     messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  });
-
-  // Send message
-  document.getElementById('sendBtn').addEventListener('click', sendMessage);
-  document.getElementById('messageInput').addEventListener('keypress', e => {
-    if (e.key === 'Enter') sendMessage();
+  }, (err) => {
+    console.error('Messages listener error:', err);
+    renderChatError(errorMessage(err));
   });
 }
+
+document.getElementById('sendBtn')?.addEventListener('click', sendMessage);
+document.getElementById('messageInput')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    sendMessage();
+  }
+});
 
 async function sendMessage() {
   const input = document.getElementById('messageInput');
   const text = input.value.trim();
-  if (!text || !chatId) return;
+  if (!text || !chatId || !chatReady) return;
+  setComposerEnabled(false);
 
-  const messagesRef = collection(db, 'chats', chatId, 'messages');
-  await addDoc(messagesRef, {
-    senderId: currentUser.uid,
-    text: text,
-    createdAt: serverTimestamp(),
-    readBy: [currentUser.uid]
-  });
+  try {
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
+    await addDoc(messagesRef, {
+      senderId: currentUser.uid,
+      text,
+      createdAt: serverTimestamp(),
+      readBy: [currentUser.uid]
+    });
 
-  // Update last message in chat
-  await setDoc(doc(db, 'chats', chatId), {
-    lastMessage: text,
-    lastUpdated: serverTimestamp()
-  }, { merge: true });
+    await setDoc(doc(db, 'chats', chatId), {
+      lastMessage: text,
+      lastSenderId: currentUser.uid,
+      lastUpdated: serverTimestamp()
+    }, { merge: true });
 
-  input.value = '';
+    input.value = '';
+  } catch (err) {
+    console.error(err);
+    alert(errorMessage(err));
+  } finally {
+    setComposerEnabled(true);
+    input?.focus();
+  }
 }
 
 // Helper functions
-function renderChatHeader(chatData) {
-  // Load seller name, listing title...
+async function renderChatHeader(chatData) {
+  const listingSnap = chatData.listingId
+    ? await getDoc(doc(db, 'listings', chatData.listingId)).catch(() => null)
+    : null;
+  const listing = listingSnap?.exists?.() ? listingSnap.data() : null;
+  const otherUid = chatData.participants?.find(uid => uid !== currentUser.uid);
+  const userSnap = otherUid
+    ? await getDoc(doc(db, 'users', otherUid)).catch(() => null)
+    : null;
+  const other = userSnap?.exists?.() ? userSnap.data() : {};
+  const otherName = other.name || chatData.sellerName || listing?.ownerName || 'Người dùng';
+  const title = listing?.title || chatData.listingTitle || 'Tin đăng';
+  const backUrl = chatData.listingId ? `product.html?id=${encodeURIComponent(chatData.listingId)}` : 'home.html';
+
   document.getElementById('chatHeader').innerHTML = `
-    <h5>💬 Chat với người bán</h5>
-    <small>Listing: ${chatData.listingId || ''}</small>
+    <a class="chat-back" href="${backUrl}" title="Quay lại tin đăng">
+      <i class="ti ti-arrow-left"></i>
+    </a>
+    <div>
+      <h5>Chat với ${escHtml(otherName)}</h5>
+      <small>${escHtml(title)}</small>
+    </div>
   `;
+}
+
+function renderChatStatus(message) {
+  document.getElementById('chatHeader').innerHTML = `<h5>${escHtml(message)}</h5>`;
+}
+
+function renderChatError(message) {
+  document.getElementById('chatHeader').innerHTML = `<h5>${escHtml(message)}</h5>`;
+  const messagesDiv = document.getElementById('chatMessages');
+  messagesDiv.innerHTML = `
+    <div class="chat-error">
+      <i class="ti ti-alert-circle"></i>
+      <span>${escHtml(message)}</span>
+    </div>
+  `;
+  chatReady = false;
+  setComposerEnabled(false);
 }
 
 function formatTime(date) {
   if (!date) return '';
   return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+}
+
+function buildChatId(listingId, participants) {
+  return [listingId, ...participants].map(encodeChatPart).join('__');
+}
+
+function encodeChatPart(value) {
+  return encodeURIComponent(String(value)).replace(/\./g, '%2E');
+}
+
+function setComposerEnabled(enabled) {
+  const input = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
+  if (input) input.disabled = !enabled;
+  if (sendBtn) sendBtn.disabled = !enabled;
+}
+
+function errorMessage(err) {
+  if (err?.code === 'permission-denied') {
+    return 'Bạn chưa có quyền dùng chat. Hãy kiểm tra Firestore Rules cho collection chats/messages.';
+  }
+  return err?.message || 'Chat đang gặp lỗi. Vui lòng thử lại.';
+}
+
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }

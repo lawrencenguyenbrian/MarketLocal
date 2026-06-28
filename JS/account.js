@@ -1,13 +1,41 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
 import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-import { getFirestore, doc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+import {
+  getFirestore,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
 
-const firebaseConfig = { /* same as your other files */ };
+const firebaseConfig = {
+  apiKey: "AIzaSyDsNtYcowBKtJw_doiE_JpV_d0KZaLMqA0",
+  authDomain: "marketlocal-e4ab7.firebaseapp.com",
+  projectId: "marketlocal-e4ab7",
+  storageBucket: "marketlocal-e4ab7.firebasestorage.app",
+  messagingSenderId: "257007076578",
+  appId: "1:257007076578:web:5e8897d117868494cf8abb"
+};
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
 let currentUser = null;
+const provinces = [
+  "An Giang", "Bắc Ninh", "Cao Bằng", "Cà Mau", "Điện Biên", "Đắk Lắk",
+  "Đồng Tháp", "Gia Lai", "Hà Tĩnh", "Hưng Yên", "Khánh Hòa", "Lai Châu",
+  "Lâm Đồng", "Lạng Sơn", "Lào Cai", "Nghệ An", "Ninh Bình", "Phú Thọ",
+  "Quảng Ngãi", "Quảng Ninh", "Quảng Trị", "Sơn La", "Tây Ninh",
+  "Thanh Hóa", "Thái Nguyên", "Tuyên Quang", "Vĩnh Long", "TP. Cần Thơ",
+  "TP. Đà Nẵng", "TP. Đồng Nai", "TP. Hà Nội", "TP. Hải Phòng",
+  "TP. Hồ Chí Minh", "TP. Huế"
+];
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -42,8 +70,6 @@ async function loadUserProfile(uid) {
 
 function populateProvinceSelect(selected = '') {
   const select = document.getElementById('editProvince');
-  // Reuse the same provinces from home.html or add full list
-  const provinces = ["TP. Hồ Chí Minh","Hà Nội","Đà Nẵng", /* ... add more */];
   select.innerHTML = '<option value="">Chọn tỉnh/thành</option>' + provinces.map(p => `<option ${p===selected?'selected':''}>${p}</option>`).join('');
 }
 
@@ -55,11 +81,13 @@ document.getElementById('profileForm').addEventListener('submit', async (e) => {
   if (!name) return alert('Vui lòng nhập tên');
 
   try {
-    await updateDoc(doc(db, 'users', currentUser.uid), {
+    await setDoc(doc(db, 'users', currentUser.uid), {
       name,
       province,
+      email: currentUser.email || '',
+      photoURL: currentUser.photoURL || '',
       lastSeen: serverTimestamp()
-    });
+    }, { merge: true });
     alert('Cập nhật thành công!');
     loadUserProfile(currentUser.uid); // refresh
   } catch (err) {
@@ -69,24 +97,80 @@ document.getElementById('profileForm').addEventListener('submit', async (e) => {
 });
 
 async function loadMyListings(uid) {
-  const q = query(collection(db, 'listings'), where('ownerId', '==', uid));
-  const snap = await getDocs(q);
   const container = document.getElementById('myListings');
-  container.innerHTML = snap.docs.map(doc => {
-    const l = doc.data();
+  container.innerHTML = '<p class="text-muted">Đang tải tin đăng...</p>';
+
+  let snap;
+  try {
+    const q = query(
+      collection(db, 'listings'),
+      where('ownerId', '==', uid),
+      orderBy('createdAt', 'desc')
+    );
+    snap = await getDocs(q);
+  } catch {
+    const q = query(collection(db, 'listings'), where('ownerId', '==', uid));
+    snap = await getDocs(q);
+  }
+
+  container.innerHTML = snap.docs.map((listingDoc) => {
+    const l = listingDoc.data();
+    const imageUrl = l.images?.[0]?.url;
+    const price = Number(l.price || 0).toLocaleString('vi-VN') + ' ₫';
+    const statusText = l.status === 'sold' ? 'Đã bán' : l.status === 'removed' ? 'Đã ẩn' : 'Đang bán';
     return `<div class="col-md-6 mb-3">
-      <div class="card">
-        <div class="card-body">
-          <h6>${l.title}</h6>
-          <p class="text-muted">${l.price?.toLocaleString('vi-VN')} ₫</p>
-          <small>${l.status || 'active'}</small>
+      <div class="card h-100">
+        ${imageUrl ? `<img src="${escHtml(imageUrl)}" class="card-img-top" alt="${escHtml(l.title)}" style="height:150px;object-fit:cover">` : ''}
+        <div class="card-body d-flex flex-column">
+          <h6>${escHtml(l.title)}</h6>
+          <p class="text-muted mb-1">${price}</p>
+          <small class="mb-3">${statusText}</small>
+          <div class="d-flex gap-2 mt-auto">
+            <a class="btn btn-sm btn-outline-primary" href="product.html?id=${listingDoc.id}">Xem</a>
+            <button class="btn btn-sm btn-outline-secondary" data-action="toggle-status" data-id="${listingDoc.id}" data-status="${l.status || 'active'}">
+              ${l.status === 'sold' ? 'Bán lại' : 'Đã bán'}
+            </button>
+            <button class="btn btn-sm btn-outline-danger" data-action="hide" data-id="${listingDoc.id}">Ẩn</button>
+          </div>
         </div>
       </div>
     </div>`;
   }).join('') || '<p>Bạn chưa có tin đăng nào.</p>';
+
+  container.querySelectorAll('[data-action]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const id = button.dataset.id;
+      const action = button.dataset.action;
+      const currentStatus = button.dataset.status;
+      button.disabled = true;
+
+      try {
+        const nextStatus = action === 'hide'
+          ? 'removed'
+          : currentStatus === 'sold' ? 'active' : 'sold';
+        await updateDoc(doc(db, 'listings', id), {
+          status: nextStatus,
+          updatedAt: serverTimestamp()
+        });
+        await loadMyListings(uid);
+      } catch (err) {
+        console.error(err);
+        alert('Không thể cập nhật tin đăng.');
+        button.disabled = false;
+      }
+    });
+  });
 }
 
 window.logout = async () => {
   await signOut(auth);
   window.location.href = 'auth.html';
 };
+
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}

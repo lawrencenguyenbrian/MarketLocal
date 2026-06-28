@@ -213,7 +213,7 @@ async function loadSeller(ownerId) {
       provinceEl.textContent = seller.province || listing.province || '—';
 
       if (seller.photoURL) {
-        avatarEl.innerHTML = `<img src="${seller.photoURL}" alt="${name}">`;
+        avatarEl.innerHTML = `<img src="${escAttr(seller.photoURL)}" alt="${escAttr(name)}">`;
       } else {
         avatarEl.textContent = name.charAt(0).toUpperCase();
       }
@@ -269,12 +269,16 @@ document.getElementById('btnContact').addEventListener('click', async () => {
     window.location.href = 'auth.html';
     return;
   }
+  if (!listing?.ownerId) {
+    alert('Tin đăng này chưa có thông tin người bán.');
+    return;
+  }
   if (currentUser.uid === listing?.ownerId) {
     alert('Đây là tin đăng của bạn.');
     return;
   }
 
-  const chatUrl = `chat.html?listing=${listingId}&seller=${listing.ownerId}`;
+  const chatUrl = `chat.html?listing=${encodeURIComponent(listingId)}&seller=${encodeURIComponent(listing.ownerId)}`;
   window.location.href = chatUrl;
 });
 
@@ -288,8 +292,12 @@ document.getElementById('btnShare').addEventListener('click', async () => {
       await navigator.share({ title: listing?.title, url });
     } catch { /* user cancelled */ }
   } else {
-    await navigator.clipboard.writeText(url);
-    alert('Đã sao chép đường dẫn!');
+    try {
+      await navigator.clipboard.writeText(url);
+      alert('Đã sao chép đường dẫn!');
+    } catch {
+      prompt('Sao chép đường dẫn:', url);
+    }
   }
 });
 
@@ -375,3 +383,11 @@ const condLabels = {
 
 function catLabel(cat)  { return catLabels[cat]  || 'Khác'; }
 function condLabel(cond) { return condLabels[cond] || cond || '—'; }
+
+function escAttr(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}

@@ -46,6 +46,8 @@ onAuthStateChanged(auth, async (user) => {
 
   if (user) {
     await loadFavorites(user.uid);
+  } else {
+    userFavorites = new Set();
   }
 
   await loadListings();
@@ -128,6 +130,11 @@ async function loadListings() {
       );
       const snap2 = await getDocs(q2);
       allListings = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
+      allListings.sort((a, b) => {
+        const aTime = a.createdAt?.toMillis?.() || 0;
+        const bTime = b.createdAt?.toMillis?.() || 0;
+        return bTime - aTime;
+      });
     } catch (err2) {
       console.error('Failed to load listings:', err2);
       allListings = [];
@@ -147,9 +154,9 @@ function renderListings(listings) {
   if (listings.length === 0) {
     grid.innerHTML = `
       <div style="grid-column:1/-1;text-align:center;padding:3rem;color:var(--text-muted)">
-        <div style="font-size:40px;margin-bottom:8px">📭</div>
+        <div style="font-size:40px;margin-bottom:8px">Không có tin</div>
         <div>Chưa có sản phẩm nào${currentCat !== 'all' ? ' trong danh mục này' : ''}.</div>
-        <a href="post.html" style="color:var(--primary);font-weight:500;margin-top:8px;display:inline-block">Đăng tin đầu tiên →</a>
+        <a href="post.html" style="color:var(--primary);font-weight:500;margin-top:8px;display:inline-block">Đăng tin đầu tiên</a>
       </div>`;
     return;
   }
@@ -173,9 +180,10 @@ function renderListings(listings) {
 }
 
 function cardHTML(listing) {
-  const price    = listing.price ? Number(listing.price).toLocaleString('vi-VN') + ' ₫' : 'Liên hệ';
+  const hasPrice = listing.price !== undefined && listing.price !== null && listing.price !== '';
+  const price    = hasPrice ? Number(listing.price).toLocaleString('vi-VN') + ' ₫' : 'Liên hệ';
   const imgEl    = listing.images?.[0]?.url
-    ? `<img src="${listing.images[0].url}" alt="${listing.title}" style="width:100%;height:100%;object-fit:cover">`
+    ? `<img src="${escAttr(listing.images[0].url)}" alt="${escAttr(listing.title)}" style="width:100%;height:100%;object-fit:cover">`
     : `<i class="ti ti-photo" style="font-size:36px;color:#d1d5db"></i>`;
   const timeAgo  = formatTime(listing.createdAt?.toDate?.());
   const isFav    = userFavorites.has(listing.id);
@@ -293,12 +301,40 @@ function applyFilters() {
 // PROVINCE FILTER
 // ════════════════════════════════════════
 document.getElementById('provinceSelect')?.addEventListener('change', (e) => {
-  const province = e.target.value; // '' = Toàn quốc
-  const catFiltered = currentCat === 'all'
-    ? allListings
-    : allListings.filter(l => l.category === currentCat);
-  const filtered = !province
-    ? catFiltered
-    : catFiltered.filter(l => l.province === province);
-  renderListings(filtered);
+  applyFilters();
 });
+
+document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
+  const existing = document.getElementById('mobileQuickMenu');
+  if (existing) {
+    existing.remove();
+    return;
+  }
+
+  const menu = document.createElement('div');
+  menu.id = 'mobileQuickMenu';
+  menu.className = 'mobile-quick-menu';
+  menu.innerHTML = currentUser
+    ? `<a href="account.html"><i class="ti ti-user"></i> Tài khoản</a>
+       <a href="post.html"><i class="ti ti-plus"></i> Đăng tin mới</a>
+       <button type="button" id="mobileLogoutBtn"><i class="ti ti-logout"></i> Đăng xuất</button>`
+    : `<a href="auth.html"><i class="ti ti-user"></i> Đăng nhập</a>
+       <a href="post.html"><i class="ti ti-plus"></i> Đăng tin mới</a>`;
+  document.querySelector('.navbar')?.after(menu);
+
+  document.getElementById('mobileLogoutBtn')?.addEventListener('click', async () => {
+    await signOut(auth);
+    window.location.href = 'auth.html';
+  });
+});
+
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('mobileQuickMenu');
+  if (!menu) return;
+  if (e.target.closest('#mobileQuickMenu') || e.target.closest('#mobileMenuBtn')) return;
+  menu.remove();
+});
+
+function escAttr(str) {
+  return escHtml(str).replace(/"/g, '&quot;');
+}
