@@ -316,6 +316,7 @@ document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
   menu.className = 'mobile-quick-menu';
   menu.innerHTML = currentUser
     ? `<a href="account.html"><i class="ti ti-user"></i> Tài khoản</a>
+       <a href="chat.html"><i class="ti ti-message"></i> Tin nhắn</a>
        <a href="post.html"><i class="ti ti-plus"></i> Đăng tin mới</a>
        <button type="button" id="mobileLogoutBtn"><i class="ti ti-logout"></i> Đăng xuất</button>`
     : `<a href="auth.html"><i class="ti ti-user"></i> Đăng nhập</a>
