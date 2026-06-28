@@ -14,6 +14,10 @@ import {
   getFirestore,
   collection,
   addDoc,
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
   serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
@@ -31,6 +35,16 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 let currentUser = null;
+let editListingId = null;
+let existingImages = [];
+
+// ════════════════════════════════════════
+// EDIT MODE — load existing listing
+// ════════════════════════════════════════
+const editId = new URLSearchParams(window.location.search).get('id');
+if (editId) {
+  editListingId = editId;
+}
 
 // ════════════════════════════════════════
 // NAVBAR UPDATER
@@ -63,7 +77,7 @@ function updateNavbar(user) {
 }
 
 // Update auth listener
-onAuthStateChanged(auth, (user) => {
+onAuthStateChanged(auth, async (user) => {
   currentUser = user;
   if (!user) {
     showToast('Vui lòng đăng nhập để đăng tin.', 'error');
@@ -71,6 +85,9 @@ onAuthStateChanged(auth, (user) => {
     return;
   }
   updateNavbar(user);
+  if (editListingId) {
+    await loadListingForEdit(editListingId);
+  }
 });
 
 // ════════════════════════════════════════
@@ -257,6 +274,65 @@ function updateSidebarImage(url) {
 }
 
 // ════════════════════════════════════════
+// EDIT MODE — load existing listing data
+// ════════════════════════════════════════
+async function loadListingForEdit(id) {
+  try {
+    const snap = await getDoc(doc(db, 'listings', id));
+    if (!snap.exists()) {
+      showToast('Tin đăng không tồn tại.', 'error');
+      return;
+    }
+    const data = snap.data();
+    if (data.ownerId !== currentUser.uid) {
+      showToast('Bạn không có quyền chỉnh sửa tin này.', 'error');
+      setTimeout(() => { window.location.href = 'home.html'; }, 1200);
+      return;
+    }
+
+    // Populate form
+    document.getElementById('inpTitle').value = data.title || '';
+    document.getElementById('inpPrice').value = data.price || '';
+    document.getElementById('inpCategory').value = data.category || '';
+    document.getElementById('inpProvince').value = data.province || '';
+    document.getElementById('inpDesc').value = data.description || '';
+    document.getElementById('inpPhone').value = data.phone || '';
+
+    // Condition
+    if (data.condition) {
+      document.querySelectorAll('.condition-btn').forEach(b => b.classList.remove('selected'));
+      const condBtn = document.querySelector(`.condition-btn[data-value="${data.condition}"]`);
+      if (condBtn) condBtn.classList.add('selected');
+      selectedCondition = data.condition;
+    }
+
+    // Update header
+    document.querySelector('.page-header h1').textContent = 'Chỉnh sửa tin';
+    document.querySelector('.page-header p').textContent = 'Cập nhật thông tin sản phẩm của bạn.';
+    document.getElementById('btnSubmit').querySelector('.btn-text').innerHTML = '<i class="ti ti-device-floppy"></i> Lưu thay đổi';
+
+    // Existing images
+    if (data.images?.length) {
+      existingImages = data.images;
+      data.images.forEach((img, i) => {
+        uploadedImages.push({ localUrl: img.url, cloudUrl: img.url, publicId: img.publicId, width: img.width, height: img.height, existing: true });
+        renderPreviewItem(i, img.url);
+        document.getElementById(`uploading-${i}`)?.remove();
+        if (i === 0) updateSidebarImage(img.url);
+      });
+    }
+
+    // Trigger live preview
+    inpTitle.dispatchEvent(new Event('input'));
+    inpPrice.dispatchEvent(new Event('input'));
+    inpProvince.dispatchEvent(new Event('change'));
+  } catch (err) {
+    console.error('Load edit error:', err);
+    showToast('Không thể tải thông tin tin đăng.', 'error');
+  }
+}
+
+// ════════════════════════════════════════
 // SUBMIT
 // ════════════════════════════════════════
 document.getElementById("postForm").addEventListener("submit", async (e) => {
@@ -292,37 +368,56 @@ document.getElementById("postForm").addEventListener("submit", async (e) => {
   btnSubmit.classList.add("loading");
   btnSubmit.disabled = true;
 
-  try {
-    const docRef = await addDoc(collection(db, "listings"), {
-      title,
-      price,
-      category,
-      province,
-      description,
-      phone,
-      condition: selectedCondition,
-      images: uploadedImages.map((img) => ({
-        url: img.cloudUrl,
-        publicId: img.publicId,
-        width: img.width || null,
-        height: img.height || null,
-      })),
-      ownerId: currentUser.uid,
-      ownerName:
-        currentUser.displayName ||
-        currentUser.email?.split("@")[0] ||
-        "Ẩn danh",
-      ownerEmail: currentUser.email || "",
-      status: "active",
-      views: 0,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-    });
+  const images = uploadedImages.map((img) => ({
+    url: img.cloudUrl,
+    publicId: img.publicId,
+    width: img.width || null,
+    height: img.height || null,
+  }));
 
-    showToast("Đăng tin thành công!", "success");
-    setTimeout(() => {
-      window.location.href = `product.html?id=${docRef.id}`;
-    }, 1200);
+  try {
+    if (editListingId) {
+      await updateDoc(doc(db, 'listings', editListingId), {
+        title,
+        price,
+        category,
+        province,
+        description,
+        phone,
+        condition: selectedCondition,
+        images,
+        updatedAt: serverTimestamp(),
+      });
+      showToast("Cập nhật thành công!", "success");
+      setTimeout(() => {
+        window.location.href = `product.html?id=${editListingId}`;
+      }, 1200);
+    } else {
+      const docRef = await addDoc(collection(db, "listings"), {
+        title,
+        price,
+        category,
+        province,
+        description,
+        phone,
+        condition: selectedCondition,
+        images,
+        ownerId: currentUser.uid,
+        ownerName:
+          currentUser.displayName ||
+          currentUser.email?.split("@")[0] ||
+          "Ẩn danh",
+        ownerEmail: currentUser.email || "",
+        status: "active",
+        views: 0,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      showToast("Đăng tin thành công!", "success");
+      setTimeout(() => {
+        window.location.href = `product.html?id=${docRef.id}`;
+      }, 1200);
+    }
   } catch (err) {
     console.error("Firestore error:", err);
     showToast("Có lỗi xảy ra khi lưu tin. Thử lại sau.", "error");

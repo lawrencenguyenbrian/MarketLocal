@@ -6,6 +6,7 @@ import {
   getDoc,
   setDoc,
   updateDoc,
+  deleteDoc,
   collection,
   query,
   where,
@@ -45,6 +46,7 @@ onAuthStateChanged(auth, async (user) => {
   currentUser = user;
   await loadUserProfile(user.uid);
   await loadMyListings(user.uid);
+  await loadFavorites(user.uid);
 });
 
 async function loadUserProfile(uid) {
@@ -127,10 +129,12 @@ async function loadMyListings(uid) {
           <small class="mb-3">${statusText}</small>
           <div class="d-flex gap-2 mt-auto">
             <a class="btn btn-sm btn-outline-primary" href="product.html?id=${listingDoc.id}">Xem</a>
+            <a class="btn btn-sm btn-outline-warning" href="post.html?id=${listingDoc.id}"><i class="ti ti-edit"></i> Sửa</a>
             <button class="btn btn-sm btn-outline-secondary" data-action="toggle-status" data-id="${listingDoc.id}" data-status="${l.status || 'active'}">
               ${l.status === 'sold' ? 'Bán lại' : 'Đã bán'}
             </button>
-            <button class="btn btn-sm btn-outline-danger" data-action="hide" data-id="${listingDoc.id}">Ẩn</button>
+            <button class="btn btn-sm btn-outline-danger" data-action="hide" data-id="${listingDoc.id}">${l.status === 'removed' ? 'Hiện' : 'Ẩn'}</button>
+            <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${listingDoc.id}"><i class="ti ti-trash"></i> Xoá</button>
           </div>
         </div>
       </div>
@@ -145,8 +149,18 @@ async function loadMyListings(uid) {
       button.disabled = true;
 
       try {
+        if (action === 'delete') {
+          if (!confirm('Bạn có chắc muốn xoá tin đăng này? Hành động này không thể hoàn tác.')) {
+            button.disabled = false;
+            return;
+          }
+          await deleteDoc(doc(db, 'listings', id));
+          await loadMyListings(uid);
+          return;
+        }
+
         const nextStatus = action === 'hide'
-          ? 'removed'
+          ? (currentStatus === 'removed' ? 'active' : 'removed')
           : currentStatus === 'sold' ? 'active' : 'sold';
         await updateDoc(doc(db, 'listings', id), {
           status: nextStatus,
@@ -160,6 +174,51 @@ async function loadMyListings(uid) {
       }
     });
   });
+}
+
+async function loadFavorites(uid) {
+  const container = document.getElementById('myFavorites');
+  container.innerHTML = '<p class="text-muted">Đang tải...</p>';
+
+  try {
+    const favSnap = await getDocs(collection(db, 'users', uid, 'favorites'));
+    if (favSnap.empty) {
+      container.innerHTML = '<p class="text-muted">Chưa có sản phẩm yêu thích nào.</p>';
+      return;
+    }
+
+    const listingIds = favSnap.docs.map(d => d.id);
+    const listings = await Promise.all(listingIds.map(id =>
+      getDoc(doc(db, 'listings', id)).then(s => s.exists() ? { id: s.id, ...s.data() } : null)
+    ));
+
+    const valid = listings.filter(Boolean);
+
+    if (valid.length === 0) {
+      container.innerHTML = '<p class="text-muted">Sản phẩm yêu thích không còn tồn tại.</p>';
+      return;
+    }
+
+    container.innerHTML = valid.map(l => {
+      const imageUrl = l.images?.[0]?.url;
+      const price = Number(l.price || 0).toLocaleString('vi-VN') + ' ₫';
+      return `<div class="col-md-6 mb-3">
+        <div class="card h-100">
+          ${imageUrl ? `<img src="${escHtml(imageUrl)}" class="card-img-top" alt="${escHtml(l.title)}" style="height:150px;object-fit:cover">` : ''}
+          <div class="card-body d-flex flex-column">
+            <h6>${escHtml(l.title)}</h6>
+            <p class="text-muted mb-1">${price}</p>
+            <div class="mt-auto">
+              <a class="btn btn-sm btn-outline-primary" href="product.html?id=${l.id}">Xem</a>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch (err) {
+    console.error('Favorites error:', err);
+    container.innerHTML = '<p class="text-muted">Lỗi tải danh sách yêu thích.</p>';
+  }
 }
 
 window.logout = async () => {

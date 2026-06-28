@@ -48,7 +48,10 @@ if (!listingId) {
   onAuthStateChanged(auth, async (user) => {
     currentUser = user;
     await loadListing();
-    if (user) await checkFavorite(user.uid);
+    if (user) {
+      await checkFavorite(user.uid);
+      checkOwner(user.uid);
+    }
   });
 }
 
@@ -237,10 +240,7 @@ async function checkFavorite(uid) {
 }
 
 function updateFavBtn() {
-  const btn     = document.getElementById('btnFav');
-  const icon    = document.getElementById('favIcon');
-  btn.classList.toggle('active', isFav);
-  icon.className = isFav ? 'ti ti-heart-filled' : 'ti ti-heart';
+  document.getElementById('btnFav').classList.toggle('active', isFav);
 }
 
 document.getElementById('btnFav').addEventListener('click', async () => {
@@ -269,18 +269,41 @@ document.getElementById('btnContact').addEventListener('click', async () => {
     window.location.href = 'auth.html';
     return;
   }
-  if (!listing?.ownerId) {
-    alert('Tin đăng này chưa có thông tin người bán.');
-    return;
-  }
-  if (currentUser.uid === listing?.ownerId) {
-    alert('Đây là tin đăng của bạn.');
-    return;
-  }
 
   const chatUrl = `chat.html?listing=${encodeURIComponent(listingId)}&seller=${encodeURIComponent(listing.ownerId)}`;
   window.location.href = chatUrl;
 });
+
+// ════════════════════════════════════════
+// OWNER ACTIONS (edit / delete)
+// ════════════════════════════════════════
+function checkOwner(uid) {
+  if (!listing?.ownerId || uid !== listing.ownerId) return;
+
+  // Change contact button
+  const contactBtn = document.getElementById('btnContact');
+  contactBtn.className = 'btn-owner';
+  contactBtn.innerHTML = '<i class="ti ti-user-check"></i> Bài đăng của bạn';
+  contactBtn.onclick = () => {};
+
+  // Show edit/delete
+  const actions = document.getElementById('ownerActions');
+  if (!actions) return;
+  actions.style.display = 'flex';
+
+  document.getElementById('btnEdit').href = `post.html?id=${encodeURIComponent(listingId)}`;
+
+  document.getElementById('btnDelete').addEventListener('click', async () => {
+    if (!confirm('Bạn có chắc muốn xoá tin đăng này? Hành động này không thể hoàn tác.')) return;
+    try {
+      await deleteDoc(doc(db, 'listings', listingId));
+      window.location.href = 'home.html';
+    } catch (err) {
+      console.error(err);
+      alert('Không thể xoá tin đăng.');
+    }
+  });
+}
 
 // ════════════════════════════════════════
 // SHARE

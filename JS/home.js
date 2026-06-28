@@ -114,31 +114,18 @@ async function loadListings() {
     const q = query(
       collection(db, 'listings'),
       where('status', '==', 'active'),
-      orderBy('createdAt', 'desc'),
       limit(20)
     );
     const snap = await getDocs(q);
     allListings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    allListings.sort((a, b) => {
+      const aTime = a.createdAt?.toMillis?.() || 0;
+      const bTime = b.createdAt?.toMillis?.() || 0;
+      return bTime - aTime;
+    });
   } catch (err) {
-    // Index may not exist yet — fall back without orderBy
-    console.warn('Falling back to unordered query:', err.message);
-    try {
-      const q2 = query(
-        collection(db, 'listings'),
-        where('status', '==', 'active'),
-        limit(20)
-      );
-      const snap2 = await getDocs(q2);
-      allListings = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
-      allListings.sort((a, b) => {
-        const aTime = a.createdAt?.toMillis?.() || 0;
-        const bTime = b.createdAt?.toMillis?.() || 0;
-        return bTime - aTime;
-      });
-    } catch (err2) {
-      console.error('Failed to load listings:', err2);
-      allListings = [];
-    }
+    console.error('Failed to load listings:', err);
+    allListings = [];
   }
 
   renderListings(allListings);
@@ -193,7 +180,7 @@ function cardHTML(listing) {
     <div class="product-card" data-id="${listing.id}" data-cat="${listing.category || 'other'}">
       <div class="product-img-placeholder">${imgEl}</div>
       <button class="product-fav${isFav ? ' active' : ''}" data-id="${listing.id}" aria-label="Yêu thích">
-        <i class="ti ${isFav ? 'ti-heart-filled' : 'ti-heart'}"></i>
+        <i class="ti ti-heart"></i>
       </button>
       <div class="product-info">
         <div class="product-name">${escHtml(listing.title)}</div>
@@ -250,18 +237,15 @@ async function toggleFavorite(listingId, btn) {
     return;
   }
   const favRef = doc(db, 'users', currentUser.uid, 'favorites', listingId);
-  const icon   = btn.querySelector('i');
 
   if (userFavorites.has(listingId)) {
     await deleteDoc(favRef);
     userFavorites.delete(listingId);
     btn.classList.remove('active');
-    icon.className = 'ti ti-heart';
   } else {
     await setDoc(favRef, { listingId, createdAt: serverTimestamp() });
     userFavorites.add(listingId);
     btn.classList.add('active');
-    icon.className = 'ti ti-heart-filled';
   }
 }
 
